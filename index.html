@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111113">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>오픽 말하기 훈련소</title>
+<style>
+/* OPIc speaking trainer (2026-11-19). Mobile first; one task per screen; big tap targets.
+   Colours: Radix slate + indigo (listen) + orange (speak), same family as the TOEIC site. */
+:root{--bg:#f0f0f3;--surface:#fcfcfd;--sunk:#e8e8ec;--line:#d9d9e0;--ink:#1c2024;--ink-2:#60646c;
+  --accent:#cc4e00;--accent-solid:#cc4e00;--accent-ink:#fff;--accent-soft:#ffefd6;--navy:#3a5bc7;--navy-solid:#3e63dd;--navy-ink:#fff;--navy-soft:#edf2fe;
+  --ok:#218358;--ok-bg:#e6f6eb;--no:#ce2c31;--no-bg:#feebec;--warn:#ab6400;--warn-bg:#fff7c2;
+  --sans:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;--serif:Georgia,"Times New Roman",serif;--mono:ui-monospace,Consolas,monospace;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#111113;--surface:#18191b;--sunk:#212225;--line:#363a3f;--ink:#edeef0;--ink-2:#b0b4ba;
+  --accent:#ffa057;--accent-solid:#f76b15;--accent-ink:#17120e;--accent-soft:#331e0b;--navy:#9eb1ff;--navy-solid:#9eb1ff;--navy-ink:#11131f;--navy-soft:#182449;
+  --ok:#3dd68c;--ok-bg:#132d21;--no:#ff9592;--no-bg:#3b1219;--warn:#ffca16;--warn-bg:#302008;color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.65;word-break:keep-all;overflow-wrap:break-word;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px 110px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:max(10px,env(safe-area-inset-top)) 0 0;border-bottom:1px solid var(--line)}
+.hrow{display:flex;align-items:center;gap:10px}
+.hrow h1{font-size:18px;margin:0;flex:1;white-space:nowrap}
+.hstat{font-family:var(--mono);font-size:13px;color:var(--ink-2)}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-top:6px}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{border:0;background:transparent;padding:8px 11px 10px;cursor:pointer;color:var(--ink-2);font-size:14.5px;border-bottom:2px solid transparent;white-space:nowrap}
+nav.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent);font-weight:700}
+main{margin-top:14px;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card h2{margin:0 0 8px;font-size:18px}.card h3{margin:12px 0 6px;font-size:16px}
+.muted{color:var(--ink-2);font-size:14.5px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{min-height:46px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 15px;cursor:pointer;font-weight:600;font-size:15.5px}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent-solid);border-color:var(--accent-solid);color:var(--accent-ink)}
+.btn.navy{background:var(--navy-solid);border-color:var(--navy-solid);color:var(--navy-ink)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink-2);font-weight:500}
+.btn.rec{background:var(--no);border-color:var(--no);color:#fff}
+.btn[disabled]{opacity:.4}
+.btn.wide{width:100%}
+.seg{display:flex;gap:4px;background:var(--sunk);border-radius:12px;padding:4px;overflow-x:auto;scrollbar-width:none}
+.seg button{flex:1;border:0;background:transparent;border-radius:9px;padding:8px 10px;cursor:pointer;white-space:nowrap;font-size:14.5px;color:var(--ink-2)}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px;cursor:pointer;font-size:14px}
+.chip[aria-pressed=true]{background:var(--navy-soft);border-color:var(--navy);color:var(--navy);font-weight:700}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-height:92px}
+.tile b{font-size:16px}.tile span{font-size:13.5px;color:var(--ink-2)}
+.tile.go{background:var(--accent-soft);border-color:var(--accent)}
+.ava{display:flex;gap:12px;align-items:center}
+.ava .face{flex:none;width:56px;height:56px;border-radius:99px;background:var(--navy-soft);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);font-size:20px}
+.ava.talk .face{box-shadow:0 0 0 4px var(--navy)}
+.ava.listen .face{box-shadow:0 0 0 4px var(--accent)}
+.qtext{font-family:var(--serif);font-size:18px;line-height:1.6}
+.pill{display:inline-block;font-size:12.5px;border-radius:99px;padding:1px 10px;background:var(--sunk);color:var(--ink-2)}
+.pill.navy{background:var(--navy-soft);color:var(--navy)}.pill.acc{background:var(--accent-soft);color:var(--accent)}
+.meter{height:10px;background:var(--sunk);border-radius:99px;overflow:hidden}.meter i{display:block;height:100%;background:var(--accent);width:0;transition:width .05s}
+.big{font-family:var(--mono);font-size:30px;font-weight:700}
+.live{font-family:var(--serif);font-size:16px;background:var(--sunk);border-radius:10px;padding:10px 12px;min-height:48px}
+.fb{display:flex;flex-direction:column;gap:6px}
+.fb div{border-radius:10px;padding:8px 12px;font-size:15px}
+.fb .ok{background:var(--ok-bg)}.fb .warn{background:var(--warn-bg)}.fb .no{background:var(--no-bg)}
+table.m{width:100%;border-collapse:collapse;font-size:14.5px}
+table.m td,table.m th{padding:6px 4px;border-top:1px solid var(--line);text-align:left}
+table.m th{color:var(--ink-2);font-weight:600;border-top:0}
+.ans{font-family:var(--serif);font-size:16.5px;line-height:1.7;background:var(--sunk);border-radius:10px;padding:10px 12px}
+pre.doc{white-space:pre-wrap;font-family:var(--serif);font-size:15.5px;line-height:1.65;background:var(--sunk);border-radius:10px;padding:10px 12px;margin:6px 0}
+.docmd p{margin:4px 0}.docmd h4{margin:10px 0 4px;font-size:15px}
+textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--surface);font-family:var(--serif);font-size:16px;line-height:1.6}
+input[type=password],input[type=text],input[type=search],select{min-height:46px;border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--surface);width:100%}
+.recitem{border-top:1px solid var(--line);padding:10px 0}
+.recitem:first-child{border-top:0}
+audio{width:100%;height:40px}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14.5px;z-index:9;max-width:90vw}
+.foot{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:6}
+.foot .in{max-width:680px;margin:0 auto;display:flex;gap:8px}
+.foot .btn{flex:1}
+.word-miss{background:var(--no-bg);border-radius:4px;padding:0 2px}
+.word-hit{background:var(--ok-bg);border-radius:4px;padding:0 2px}
+svg.chart{width:100%;height:140px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="hrow"><h1>오픽 말하기 훈련소</h1><span class="hstat" id="hstat"></span></div>
+    <nav class="tabs" id="tabs"></nav>
+  </header>
+  <main id="main"></main>
+</div>
+<div class="foot" id="foot" hidden><div class="in" id="footIn"></div></div>
+<script src="data/opic_data.js"></script>
+<script>
+"use strict";
+(function(){
+var D=window.OPIC||{q:[],m:[],f:[],e:[]};
+var T15N=["자기소개","활동묘사","최근경험","사물묘사","인물묘사","장소묘사","시간순서","준비물","첫 계기","특별한 경험","에바에게 질문하기","3-4가지 질문하기","문제해결 · 대안제시","유사 경험","과거와 현재 비교","이슈 · 문제점"];
+var T15TYPE={0:"intro",1:"describe",2:"past",3:"describe",4:"describe",5:"describe",6:"routine",7:"routine",8:"past",9:"past",10:"ask_ava",11:"ask_questions",12:"solve_problem",13:"related_experience",14:"compare",15:"issue"};
+var T15CAT={0:"intro",10:"ask_ava",11:"roleplay",12:"roleplay",13:"roleplay",14:"advanced",15:"advanced"};
+var SURVEY_DEF=["집","영화보기","공연 · 콘서트","공원","해변","카페","음악 감상","조깅 · 걷기","집에서 보내는 휴가","국내여행","해외여행"];
+// ---------- state ----------
+var KEY="opic.v1";
+function load(){var s;try{s=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){s=null}s=s||{};
+  s.set=Object.assign({voice:"",rate:0.95,level:5,src:"mix",survey:SURVEY_DEF.slice(),liveSR:true,showText:false,whisper:"Xenova/whisper-tiny.en"},s.set||{});
+  s.scripts=s.scripts||{};s.known=s.known||{};s.log=s.log||{};s.seen=s.seen||{};return s}
+var S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast("기기 저장 공간이 부족합니다")}}
+function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function logAdd(sec){var t=today(),L=S.log[t]||{n:0,sec:0};L.n++;L.sec+=sec;S.log[t]=L;save();hstat()}
+// ---------- IndexedDB for recordings ----------
+var DBP=null;
+function db(){if(DBP)return DBP;DBP=new Promise(function(ok,no){try{var r=indexedDB.open("opic",1);r.onupgradeneeded=function(){r.result.createObjectStore("rec",{keyPath:"id"})};r.onsuccess=function(){ok(r.result)};r.onerror=function(){no(r.error)}}catch(e){no(e)}});return DBP}
+function tx(mode,fn){return db().then(function(d){return new Promise(function(ok,no){var t=d.transaction("rec",mode),st=t.objectStore("rec"),out=fn(st);t.oncomplete=function(){ok(out&&out.result!==undefined?out.result:out)};t.onerror=function(){no(t.error)}})})}
+function recPut(x){return tx("readwrite",function(st){return st.put(x)})}
+function recAll(){return tx("readonly",function(st){return st.getAll()})}
+function recDel(id){return tx("readwrite",function(st){return st.delete(id)})}
+function recGet(id){return tx("readonly",function(st){return st.get(id)})}
+// ---------- dom ----------
+function h(tag,p){var e=document.createElement(tag);if(p)for(var k in p){var v=p[k];if(v==null||v===false)continue;
+  if(k==="class")e.className=v;else if(k.slice(0,2)==="on")e.addEventListener(k.slice(2),v);else e.setAttribute(k,v===true?"":v)}
+  for(var i=2;i<arguments.length;i++){var c=arguments[i];if(c==null||c===false)continue;(Array.isArray(c)?c:[c]).forEach(function(x){if(x!=null&&x!==false)e.append(x.nodeType?x:document.createTextNode(String(x)))})}return e}
+var M=document.getElementById("main"),FOOT=document.getElementById("foot"),FIN=document.getElementById("footIn");
+function clear(e){while(e.firstChild)e.removeChild(e.firstChild);return e}
+var toastT;function toast(m){var o=document.querySelector(".toast");if(o)o.remove();var t=h("div",{class:"toast",role:"status"},m);document.body.append(t);clearTimeout(toastT);toastT=setTimeout(function(){t.remove()},2600)}
+function foot(btns){clear(FIN);btns=(btns||[]).filter(Boolean);if(!btns.length){FOOT.hidden=true;return}FOOT.hidden=false;btns.forEach(function(b){FIN.append(b)})}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function mmss(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
+function hstat(){var L=S.log[today()]||{n:0,sec:0};document.getElementById("hstat").textContent="오늘 "+L.n+"개 · "+Math.round(L.sec/60)+"분"}
+// ---------- speech out (Ava) ----------
+var VOICES=[];function loadVoices(){try{VOICES=speechSynthesis.getVoices().filter(function(v){return/^en/i.test(v.lang)})}catch(e){VOICES=[]}}
+try{loadVoices();speechSynthesis.onvoiceschanged=loadVoices}catch(e){}
+function avaVoice(){if(S.set.voice){var v=VOICES.filter(function(x){return x.name===S.set.voice})[0];if(v)return v}
+  return VOICES.filter(function(v){return/en[-_]US/i.test(v.lang)&&/(ava|samantha|jenny|aria|zira|female|google us english)/i.test(v.name)})[0]||VOICES.filter(function(v){return/en[-_]US/i.test(v.lang)})[0]||VOICES[0]||null}
+function canSpeak(){try{return !!window.speechSynthesis&&typeof SpeechSynthesisUtterance!=="undefined"}catch(e){return false}}
+function speak(text,onend,rate){if(!canSpeak()){onend&&setTimeout(onend,300);return}try{speechSynthesis.cancel()}catch(e){}
+  var u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=rate||S.set.rate;var v=avaVoice();if(v)u.voice=v;var done=false;
+  function fin(){if(done)return;done=true;onend&&onend()}u.onend=fin;u.onerror=fin;
+  try{speechSynthesis.speak(u)}catch(e){fin()}
+  // some mobile browsers never fire onend: fall back on a length estimate
+  setTimeout(function(){if(!done&&!speechSynthesis.speaking)fin()},Math.max(4000,text.split(/\s+/).length*600/(u.rate||1)))}
+function stopSpeak(){try{speechSynthesis.cancel()}catch(e){}}
+// ---------- recorder: audio + level timeline + live recognition ----------
+function srClass(){return window.SpeechRecognition||window.webkitSpeechRecognition||null}
+function startRec(o){o=o||{};
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return Promise.reject(new Error("이 브라우저는 녹음을 지원하지 않습니다"));
+  return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(function(stream){
+    var types=["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg;codecs=opus"],mime="";
+    if(window.MediaRecorder&&MediaRecorder.isTypeSupported)for(var i=0;i<types.length;i++){if(MediaRecorder.isTypeSupported(types[i])){mime=types[i];break}}
+    var mr=new MediaRecorder(stream,mime?{mimeType:mime}:undefined),chunks=[];mr.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data)};mr.start(1000);
+    var AC=window.AudioContext||window.webkitAudioContext,ac=new AC(),src=ac.createMediaStreamSource(stream),an=ac.createAnalyser();an.fftSize=1024;src.connect(an);
+    var buf=new Float32Array(an.fftSize),levels=[],t0=performance.now();
+    var iv=setInterval(function(){an.getFloatTimeDomainData(buf);var s=0;for(var k=0;k<buf.length;k++)s+=buf[k]*buf[k];var r=Math.sqrt(s/buf.length);levels.push(r);o.onLevel&&o.onLevel(r,(performance.now()-t0)/1000)},50);
+    var SR=srClass(),rec=null,finals=[],interim="",on=false,err=null;
+    if(SR&&S.set.liveSR&&o.sr!==false){try{rec=new SR();rec.lang="en-US";rec.continuous=true;rec.interimResults=true;
+      rec.onresult=function(e){interim="";for(var i=e.resultIndex;i<e.results.length;i++){var r=e.results[i];if(r.isFinal)finals.push(r[0].transcript.trim());else interim+=r[0].transcript}o.onText&&o.onText((finals.join(" ")+" "+interim).trim())};
+      rec.onerror=function(e){err=e.error||"error"};rec.onend=function(){if(on){try{rec.start()}catch(x){}}};rec.start();on=true}catch(x){err="start";rec=null}}
+    var ctl={stop:function(){return new Promise(function(ok){on=false;try{rec&&rec.stop()}catch(x){}clearInterval(iv);
+      mr.onstop=function(){stream.getTracks().forEach(function(t){t.stop()});try{ac.close()}catch(x){}
+        ok({blob:new Blob(chunks,{type:mr.mimeType||mime||"audio/webm"}),dur:(performance.now()-t0)/1000,levels:levels,text:(finals.join(" ")+" "+interim).trim(),sr:rec?(err||"ok"):"none"})};
+      try{mr.stop()}catch(x){mr.onstop()}})},cancel:function(){on=false;try{rec&&rec.abort()}catch(x){}clearInterval(iv);try{mr.stop()}catch(x){}stream.getTracks().forEach(function(t){t.stop()});try{ac.close()}catch(x){}}};
+    return ctl})}
+// ---------- analysis ----------
+var FILL=["um","uh","er","erm","hmm","uhm"],CONN=["and then","so","because","but","actually","also","after that","anyway","first","finally","however","for example","plus","besides","on top of that","that's why","since","while","when","in the end","these days","nowadays","compared to"];
+var PASTW="was were went had did got made saw took came told said thought felt bought ate found left met spent began gave knew became brought kept ran sat stood wrote heard paid lost won drove flew slept woke could would".split(" ");
+var PRESW="am is are go have do get make see take come tell say think feel buy eat find leave meet spend give know become bring keep".split(" ");
+var STOP={};"a an the i you me my your we our it its is are was were be been to of in on at for and or but so do does did what when where why how who which that this these those there here about with from as by can could would will should tell describe please give details as many possible like also some any very really have has had".split(" ").forEach(function(w){STOP[w]=1});
+function words(t){return (t||"").toLowerCase().replace(/[^a-z' ]/g," ").split(/\s+/).filter(Boolean)}
+function cnt(txt,ph){var m=txt.match(new RegExp("(^| )"+ph.replace(/'/g,"'")+"(?= |$)","g"));return m?m.length:0}
+function analyze(r,q){var lv=r.levels||[],n=lv.length,dt=0.05;var sorted=lv.slice().sort(function(a,b){return a-b});var floor=sorted[Math.floor(n*0.05)]||0,p90=sorted[Math.floor(n*0.9)]||0;
+  // speech threshold: above the noise floor, but never above 30 % of loud speech (someone who never pauses has no silent floor)
+  var thr=Math.max(0.01,Math.min(floor*2.8,p90*0.3));var sp=lv.map(function(x){return x>thr});var on=-1,last=-1;for(var i=0;i<n;i++){if(sp[i]&&sp[i+1]&&sp[i+2]){on=i;break}}for(var j=n-1;j>=0;j--){if(sp[j]){last=j;break}}
+  var longest=0,run=0,p2=0,p3=0,speakN=0;if(on>=0)for(var k=on;k<=last;k++){if(sp[k]){speakN++;if(run*dt>=2)p2++;if(run*dt>=3)p3++;run=0}else{run++;if(run*dt>longest)longest=run*dt}}
+  var active=on>=0?(last-on+1)*dt:0,w=words(r.text),wc=w.length;var txt=" "+w.join(" ")+" ",flat=w.join(" ");
+  var fills={};FILL.forEach(function(f){var m=w.filter(function(x){return x===f}).length;if(m)fills[f]=m});var fillN=Object.keys(fills).reduce(function(a,k){return a+fills[k]},0);
+  var conn={};CONN.forEach(function(c){var m=cnt(flat,c);if(m)conn[c]=m});var connN=Object.keys(conn).reduce(function(a,k){return a+conn[k]},0);
+  var past=0,pres=0;w.forEach(function(x){if(PASTW.indexOf(x)>=0||(/ed$/.test(x)&&x.length>4))past++;else if(PRESW.indexOf(x)>=0)pres++});
+  var uniq={};w.forEach(function(x){uniq[x]=1});var ttr=wc?Object.keys(uniq).length/wc:0;
+  var qk=q?words(q.q).filter(function(x){return !STOP[x]&&x.length>3}):[];var qku={};qk.forEach(function(x){qku[x]=1});qk=Object.keys(qku);var hit=qk.filter(function(x){return txt.indexOf(" "+x)>=0});
+  return{total:r.dur,active:active,start:on>=0?on*dt:r.dur,longest:longest,p2:p2,p3:p3,speakRatio:active?speakN*dt/active:0,words:wc,wpm:active>5&&wc?wc/(active/60):0,
+    fills:fills,fillN:fillN,conn:conn,connN:connN,past:past,pres:pres,ttr:ttr,qk:qk.length,qhit:hit.length,hasText:wc>0,sr:r.sr}}
+function feedback(a,q){var t=q?q.type:"",out=[];var isPast=t==="past"||t==="related_experience";
+  function add(k,m){out.push({k:k,m:m})}
+  var L=a.active;if(L<30)add("no","말한 시간 "+mmss(L)+": 너무 짧습니다. 문항마다 1분 이상(5-10 문장)을 목표로 하세요.");else if(L<60)add("warn","말한 시간 "+mmss(L)+": 조금 짧습니다. 이유 하나, 예 하나를 더 붙여 1분을 넘기세요.");else if(L<=150)add("ok","말한 시간 "+mmss(L)+": 좋은 길이입니다(1-2분 30초).");else add("warn","말한 시간 "+mmss(L)+": 깁니다. 40분 안에 15문항을 끝내려면 2분 30초 안쪽이 안전합니다.");
+  if(a.start>5)add("warn","말을 시작하기까지 "+a.start.toFixed(1)+"초: 질문이 끝나면 Well, let me think 처럼 바로 입을 여세요.");
+  if(a.longest>=3)add("no","가장 길게 멈춘 시간 "+a.longest.toFixed(1)+"초(3초 이상 "+a.p3+"번): 3초 넘게 조용하면 IL 쪽 신호입니다. 멈출 것 같으면 필러나 연결어로 이어 가세요.");else if(a.longest>=2)add("warn","가장 길게 멈춘 시간 "+a.longest.toFixed(1)+"초: 2초 넘는 멈춤 "+a.p2+"번. 조금 줄이면 더 자연스럽습니다.");else if(L>10)add("ok","멈춤이 짧습니다(가장 길게 "+a.longest.toFixed(1)+"초).");
+  if(a.hasText){
+    if(a.wpm)add(a.wpm<70?"warn":"ok","말 빠르기 분당 "+Math.round(a.wpm)+"단어"+(a.wpm<70?": 느린 편입니다. 짧은 문장을 끊지 말고 이어 보세요.":": 괜찮습니다."));
+    var fk=Object.keys(a.fills);if(fk.some(function(k){return a.fills[k]>=5}))add("warn","같은 필러를 많이 씀("+fk.map(function(k){return k+" "+a.fills[k]}).join(", ")+"): Well · Let me see · Actually 를 돌려 쓰세요.");
+    if(a.connN<3)add("warn","연결어 "+a.connN+"개: and then, so, because, but, after that 을 3개 이상 넣으면 문장이 이어진 말로 들립니다.");else add("ok","연결어 "+a.connN+"개("+Object.keys(a.conn).slice(0,5).join(", ")+").");
+    if(isPast){var r=a.past+a.pres?a.past/(a.past+a.pres):0;if(r<0.6)add("no","과거 경험 질문인데 과거형 비율 "+Math.round(r*100)+"%: 이야기 끝까지 was, went, had 처럼 과거형으로 말하세요. 틀리면 I mean 으로 바로 고치면 됩니다.");else add("ok","과거형을 잘 유지했습니다("+Math.round(r*100)+"%).")}
+    if(a.qk&&a.qhit/a.qk<0.25)add("warn","질문의 핵심 단어를 거의 다루지 않았습니다("+a.qhit+"/"+a.qk+"). 묻는 것을 하나씩 답했는지 보세요.");
+    if(a.words>=40&&a.ttr<0.4)add("warn","같은 단어를 많이 되풀이합니다(서로 다른 단어 비율 "+Math.round(a.ttr*100)+"%).");
+  } else add("warn","받아쓰기가 없어 단어 · 연결어 · 시제 점검은 빠졌습니다. 녹음함에서 '정밀 받아쓰기' 를 누르면 채워집니다.");
+  return out}
+function levelGuess(a){if(!a.hasText||a.active<20)return null;var s=0;if(a.active>=60)s++;if(a.words>=90)s++;if(a.longest<3)s++;if(a.connN>=4)s++;if(a.wpm>=90)s++;if(a.ttr>=0.45)s++;
+  return s<=2?"IL-IM1 쪽":s<=4?"IM2-IM3 쪽":"IH 를 노려 볼 만함"}
+// ---------- whisper (in-browser, after recording) ----------
+var WH=null;
+function whisper(blob,onStatus){return (async function(){
+  onStatus&&onStatus("오디오를 변환하는 중");var ab=await blob.arrayBuffer();var AC=window.AudioContext||window.webkitAudioContext;var ac=new AC();var buf=await ac.decodeAudioData(ab);try{ac.close()}catch(e){}
+  var len=Math.ceil(buf.duration*16000),oc=new OfflineAudioContext(1,len,16000),s=oc.createBufferSource();s.buffer=buf;s.connect(oc.destination);s.start();var rs=await oc.startRendering();var pcm=rs.getChannelData(0);
+  if(!WH){onStatus&&onStatus("받아쓰기 모델을 불러오는 중(처음 한 번은 수십 MB 를 내려받습니다)");
+    var mod=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");
+    WH=await mod.pipeline("automatic-speech-recognition",S.set.whisper,{progress_callback:function(p){if(p&&p.status==="progress"&&p.total)onStatus&&onStatus("모델 내려받는 중 "+Math.round(100*p.loaded/p.total)+"%")}})}
+  onStatus&&onStatus("받아쓰는 중(1분 녹음에 수십 초 걸릴 수 있음)");
+  var out=await WH(pcm,{chunk_length_s:30,stride_length_s:5});
+  // Whisper writes sound tags such as [phone ringing] or (music) for non-speech; drop them before counting words
+  return (out&&out.text||"").replace(/\[[^\]]*\]|\([^)]*\)/g," ").replace(/\s+/g," ").trim()})()}
+// ---------- academy pack (encrypted) ----------
+var ACAD=null;
+function b64(s){var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
+function unlock(pw){return fetch("data/academy.enc.json",{cache:"no-cache"}).then(function(r){if(!r.ok)throw new Error("학원 자료 파일이 아직 없습니다");return r.json()}).then(async function(enc){
+  var km=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  var key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(enc.salt),iterations:enc.iter,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["decrypt"]);
+  var pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(enc.iv)},key,b64(enc.ct)).catch(function(){throw new Error("암호가 맞지 않습니다")});
+  ACAD=JSON.parse(new TextDecoder().decode(pt));return ACAD})}
+function autoUnlock(){var pw=null;try{pw=localStorage.getItem("opic.pass")}catch(e){}if(pw)return unlock(pw).catch(function(){ACAD=null});return Promise.resolve()}
+function academyQ(){if(!ACAD)return[];return ACAD.questions.map(function(x){var t=x.t15;return{id:x.id,set:null,topic:x.topic_ko,topic_ko:x.topic_ko,cat:T15CAT[t]||"survey",type:T15TYPE[t]||"describe",t15:t,slot:1,lv:[3,4,5,6],q:x.q,ko:"",cue:"",src:"academy"}})}
+function allQ(src){src=src||S.set.src;var nq=D.q.map(function(x){return Object.assign({src:"new"},x)}),aq=academyQ();return src==="new"?nq:src==="academy"?(aq.length?aq:nq):nq.concat(aq)}
+// ---------- exam builder ----------
+function topicMatch(topicKo,picks){return picks.some(function(p){var a=p.replace(/\s|·/g,""),b=String(topicKo||"").replace(/\s|·/g,"");return b.indexOf(a.slice(0,2))>=0||a.indexOf(b.slice(0,2))>=0})}
+function setsOf(pool,cat){var m={};pool.filter(function(x){return x.cat===cat&&x.set}).forEach(function(x){(m[x.set]=m[x.set]||[]).push(x)});return Object.keys(m).map(function(k){return m[k].sort(function(a,b){return a.slot-b.slot})})}
+function acadCombo(pool,topic){var g=pool.filter(function(x){return x.src==="academy"&&x.topic_ko===topic});var d=shuffle(g.filter(function(x){return x.type==="describe"})),r=shuffle(g.filter(function(x){return x.type==="routine"})),p=shuffle(g.filter(function(x){return x.type==="past"}));
+  var a=d[0],b=r[0]||d[1],c=p[0];return a&&b&&c?[a,b,c]:null}
+function buildExam(level,src){var pool=allQ(src),picks=S.set.survey.length?S.set.survey:SURVEY_DEF,out=[];var useAcad=pool.some(function(x){return x.src==="academy"}),useNew=pool.some(function(x){return x.src==="new"});
+  function want(){return useAcad&&useNew?Math.random()<0.5?"academy":"new":useAcad?"academy":"new"}
+  var intro=pool.filter(function(x){return x.cat==="intro"});out.push(pick(intro.length?intro:[{id:"intro0",cat:"intro",type:"intro",t15:0,q:"Let's start the interview now. Tell me a little bit about yourself.",ko:"자기소개",cue:"3-5 문장, 지금 하는 일 · 사는 곳 · 취미",src:"new"}]));
+  var usedT={};function surveyCombo(){for(var tries=0;tries<30;tries++){var w=want();
+      if(w==="new"){var ss=setsOf(pool.filter(function(x){return x.src==="new"}),"survey").filter(function(g){return topicMatch(g[0].topic_ko,picks)&&!usedT[g[0].topic_ko]});if(ss.length){var g=pick(ss);usedT[g[0].topic_ko]=1;return g}}
+      else{var tops={};pool.filter(function(x){return x.src==="academy"&&x.cat==="survey"&&topicMatch(x.topic_ko,picks)}).forEach(function(x){tops[x.topic_ko]=1});var tl=shuffle(Object.keys(tops)).filter(function(t){return !usedT[t]});for(var i=0;i<tl.length;i++){var c=acadCombo(pool,tl[i]);if(c){usedT[tl[i]]=1;return c}}}}
+    var any=setsOf(pool,"survey").filter(function(g){return !usedT[g[0].topic_ko]});if(any.length){var g2=pick(any);usedT[g2[0].topic_ko]=1;return g2}return []}
+  out=out.concat(surveyCombo(),surveyCombo());
+  var un=setsOf(pool,"unexpected");var ac=[];if(useAcad){var tops2={};pool.filter(function(x){return x.src==="academy"&&x.cat==="survey"&&!topicMatch(x.topic_ko,picks)}).forEach(function(x){tops2[x.topic_ko]=1});shuffle(Object.keys(tops2)).some(function(t){var c=acadCombo(pool,t);if(c){ac=c;return true}})}
+  out=out.concat(want()==="academy"&&ac.length?ac:un.length?pick(un):ac);
+  var rp=setsOf(pool,"roleplay");var arp=[11,12,13].map(function(t){return pick(pool.filter(function(x){return x.src==="academy"&&x.t15===t})||[])}).filter(Boolean);
+  out=out.concat(want()==="academy"&&arp.length===3?arp:rp.length?pick(rp):arp);
+  if(level>=5){var adv=setsOf(pool,"advanced");var aadv=[14,15].map(function(t){var c=pool.filter(function(x){return x.src==="academy"&&x.t15===t});return c.length?pick(c):null}).filter(Boolean);
+    out=out.concat(want()==="academy"&&aadv.length===2?aadv:adv.length?pick(adv):aadv)}
+  else{var rp2=rp.filter(function(g){return out.indexOf(g[0])<0});var ava=pool.filter(function(x){return x.cat==="ask_ava"});out.push(rp2.length?pick(rp2)[2]:pick(pool.filter(function(x){return x.type==="describe"})));out.push(ava.length?pick(ava):pick(pool))}
+  return out.filter(Boolean).slice(0,15)}
+// ---------- shared widgets ----------
+function qCard(q,o){o=o||{};var show=o.show!=null?o.show:S.set.showText;var txt=h("div",{class:"qtext",hidden:!show},q.q);
+  var ko=q.ko?h("div",{class:"muted",hidden:!show},q.ko):null,cue=q.cue?h("div",{class:"muted",hidden:!show},"잡을 것: "+q.cue):null;
+  var tog=h("button",{class:"btn ghost",onclick:function(){var hid=!txt.hidden;txt.hidden=hid;if(ko)ko.hidden=hid;if(cue)cue.hidden=hid;tog.textContent=hid?"질문 글자 보기":"질문 글자 숨기기"}},show?"질문 글자 숨기기":"질문 글자 보기");
+  return h("div",{class:"card"},h("div",{class:"row",style:"justify-content:space-between"},h("span",{class:"pill navy"},T15N[q.t15]||q.type),h("span",{class:"pill "+(q.src==="academy"?"acc":"")},q.src==="academy"?"학원":"새 문제"),q.topic_ko?h("span",{class:"pill"},q.topic_ko):null),
+    h("div",{style:"height:8px"}),txt,ko,cue,h("div",{class:"row"},h("button",{class:"btn navy",onclick:function(){speak(q.q)}},"▶ 질문 듣기"),tog))}
+function metricTable(a){return h("table",{class:"m"},h("tr",null,h("th",null,"말한 시간"),h("th",null,"최장 멈춤"),h("th",null,"분당 단어"),h("th",null,"연결어")),
+  h("tr",null,h("td",null,mmss(a.active)),h("td",null,a.longest.toFixed(1)+"초"),h("td",null,a.hasText?Math.round(a.wpm):"-"),h("td",null,a.hasText?a.connN:"-")))}
+function fbBlock(a,q){var g=levelGuess(a);return h("div",{class:"fb"},feedback(a,q).map(function(x){return h("div",{class:x.k},x.m)}),g?h("div",{class:"muted"},"자동 점검으로 본 대략의 위치: "+g+" (참고용, 공식 점수와 다를 수 있음)"):null)}
+function modelsFor(q){var t=q.t15;var list=D.m.filter(function(m){return m.t15===t});var same=list.filter(function(m){return m.qid===q.id});return same.concat(list.filter(function(m){return same.indexOf(m)<0}))}
+function frameFor(t){return D.f.filter(function(f){return f.t15===t})[0]||null}
+function frameCard(f){if(!f)return null;return h("div",{class:"card"},h("h2",null,"답변 틀: "+f.name_ko),h("p",{class:"muted"},f.when),
+  f.steps.map(function(s,i){return h("div",{style:"margin:6px 0"},h("b",null,(i+1)+". "+s.ko),h("div",{class:"ans",style:"margin-top:4px"},s.en))}),
+  f.tips&&f.tips.length?h("div",null,h("h3",null,"요령"),f.tips.map(function(t){return h("div",{class:"muted"},"• "+t)})):null,
+  f.avoid&&f.avoid.length?h("div",null,h("h3",null,"피할 것"),f.avoid.map(function(t){return h("div",{class:"muted"},"• "+t)})):null)}
+function modelCard(m){var hid=true;var ko=h("div",{class:"muted",hidden:true},m.ko);
+  return h("div",{class:"card"},h("div",{class:"row"},h("span",{class:"pill acc"},m.lv),h("span",{class:"pill navy"},T15N[m.t15]),h("button",{class:"btn ghost",onclick:function(){speak(m.a,null,S.set.rate)}},"▶ 듣기"),h("button",{class:"btn ghost",onclick:function(){ko.hidden=!ko.hidden}},"뜻")),
+    h("div",{class:"muted",style:"margin:6px 0"},"키워드: "+m.keys.join(" · ")),h("div",{class:"ans"},m.a),ko,h("div",{class:"chips",style:"margin-top:8px"},m.expr.map(function(e){return h("span",{class:"pill"},e)})))}
+function academyDocs(t){if(!ACAD)return[];return ACAD.docs.filter(function(d){return d.t15===t})}
+function mdBlock(md){var box=h("div",{class:"docmd"});var parts=md.split(/```(?:text)?\n?/);parts.forEach(function(p,i){if(i%2===1){box.append(h("pre",{class:"doc"},p.replace(/\n$/,"")))}else{p.split("\n").forEach(function(line){if(!line.trim())return;var m4=line.match(/^#{4,}\s*(.*)/);if(m4){box.append(h("h4",null,m4[1]));return}
+  var p2=h("p",null);line.replace(/^- /,"• ").split(/(\*\*[^*]+\*\*)/).forEach(function(seg){if(/^\*\*/.test(seg))p2.append(h("b",null,seg.replace(/\*\*/g,"")));else if(seg)p2.append(seg.replace(/`/g,""))});box.append(p2)})}});return box}
+function docCard(d){var body=h("div",{hidden:true},mdBlock(d.md));var b=h("button",{class:"btn ghost",onclick:function(){body.hidden=!body.hidden;b.textContent=body.hidden?"펼치기":"접기"}},"펼치기");
+  return h("div",{class:"card"},h("div",{class:"row",style:"justify-content:space-between"},h("b",null,d.title),h("span",{class:"pill acc"},d.sec),b),body)}
+// recording panel used by every mode
+function recPanel(q,o){o=o||{};var box=h("div",{class:"card"});var meter=h("div",{class:"meter"},h("i"));var clock=h("div",{class:"big"},"0:00");var live=h("div",{class:"live",hidden:!o.showLive},"");
+  var st=h("div",{class:"muted"},o.limit?"제한 "+mmss(o.limit):"녹음 버튼을 누르고 답하세요.");var btn=h("button",{class:"btn rec wide"},"● 녹음 시작");var ctl=null,timer=null;
+  box.append(h("div",{class:"row",style:"justify-content:space-between"},clock,st),meter,h("div",{style:"height:8px"}),live,h("div",{style:"height:8px"}),btn);
+  function start(){startRec({onLevel:function(r,t){meter.firstChild.style.width=Math.min(100,r*600)+"%";clock.textContent=mmss(t);if(o.limit&&t>=o.limit)stop()},onText:function(t){live.textContent=t}}).then(function(c){ctl=c;btn.textContent="■ 녹음 끝내기";btn.className="btn primary wide";st.textContent=o.limit?"제한 "+mmss(o.limit)+" · 말하는 중":"말하는 중"}).catch(function(e){toast("마이크를 쓸 수 없습니다: "+(e.message||e.name));st.textContent="마이크 권한을 허용해야 녹음됩니다."})}
+  function stop(){if(!ctl)return;var c=ctl;ctl=null;btn.disabled=true;st.textContent="저장하는 중";c.stop().then(function(r){btn.disabled=false;btn.textContent="● 다시 녹음";btn.className="btn rec wide";meter.firstChild.style.width="0";st.textContent="녹음 "+mmss(r.dur);o.onDone&&o.onDone(r)})}
+  btn.onclick=function(){if(ctl)stop();else start()};box.startNow=start;box.stopNow=stop;box.isOn=function(){return !!ctl};box.cancel=function(){if(ctl){ctl.cancel();ctl=null}};return box}
+function saveRec(r,q,mode,a){var id=Date.now()+"_"+Math.random().toString(36).slice(2,7);var x={id:id,at:new Date().toISOString(),mode:mode,qid:q?q.id:"",q:q?q.q:"",t15:q?q.t15:null,src:q?q.src:"",blob:r.blob,mime:r.blob.type,dur:r.dur,text:r.text,levels:r.levels.filter(function(_,i){return i%4===0}),a:a};
+  logAdd(a?a.active:r.dur);return recPut(x).then(function(){return x}).catch(function(e){toast("녹음 저장 실패: "+e.message);return x})}
+function resultBlock(r,q,a,rec){var url=URL.createObjectURL(r.blob);var tx=h("div",{class:"live"},r.text||"(받아쓰기 없음)");
+  var wbtn=h("button",{class:"btn ghost",onclick:function(){wbtn.disabled=true;whisper(r.blob,function(s){wbtn.textContent=s}).then(function(t){r.text=t;tx.textContent=t||"(들리는 말이 없음)";var a2=analyze(r,q);fb.replaceWith(fb=fbBlock(a2,q));mt.replaceWith(mt=metricTable(a2));wbtn.textContent="정밀 받아쓰기 완료";if(rec){rec.text=t;rec.a=a2;recPut(rec)}}).catch(function(e){wbtn.disabled=false;wbtn.textContent="정밀 받아쓰기 실패: "+(e.message||e)})}},"정밀 받아쓰기(Whisper)");
+  var mt=metricTable(a),fb=fbBlock(a,q);
+  return h("div",{class:"card"},h("h2",null,"점검"),h("audio",{controls:true,src:url}),h("div",{style:"height:8px"}),mt,h("div",{style:"height:8px"}),fb,h("h3",null,"받아쓰기"),tx,h("div",{class:"row"},wbtn))}
+// ---------- views ----------
+var VIEWS=[["home","오늘"],["exam","실전 모의고사"],["type","유형 연습"],["rep","3번 말하기"],["shadow","섀도잉"],["listen","질문 알아듣기"],["expr","표현"],["acad","학원 자료"],["mine","내 스크립트"],["box","녹음함"],["set","설정"]];
+var view="home",cleanup=null;
+var tabs=document.getElementById("tabs");VIEWS.forEach(function(v){tabs.append(h("button",{"data-v":v[0],onclick:function(){go(v[0])}},v[1]))});
+function go(v){if(cleanup){try{cleanup()}catch(e){}cleanup=null}stopSpeak();view=v;Array.prototype.forEach.call(tabs.children,function(b){b.setAttribute("aria-selected",b.dataset.v===v?"true":"false")});clear(M);foot(null);(V[v]||V.home)();window.scrollTo(0,0)}
+var V={};
+V.home=function(){var nq=D.q.length,ac=ACAD?ACAD.questions.length:0;
+  M.append(h("div",{class:"tiles"},
+    h("button",{class:"tile go",onclick:function(){go("exam")}},h("b",null,"실전 모의고사"),h("span",null,"15문항 · 40분 · 질문 음성 · 녹음 · 점검")),
+    h("button",{class:"tile",onclick:function(){go("type")}},h("b",null,"유형 연습"),h("span",null,"학원 15유형별로 한 문항씩")),
+    h("button",{class:"tile",onclick:function(){go("rep")}},h("b",null,"3번 말하기"),h("span",null,"같은 질문 2분 · 1분 30초 · 1분")),
+    h("button",{class:"tile",onclick:function(){go("shadow")}},h("b",null,"섀도잉"),h("span",null,"모범 답변 따라 말하고 일치율"))),
+    h("div",{class:"card"},h("h2",null,"이렇게 쓰세요"),
+      h("p",{class:"muted"},"1) 학원 자료 탭에서 암호를 한 번 넣으면 학원 질문 230개 · 템플릿 · 완성 답변이 열립니다. 2) 유형 연습으로 유형마다 틀을 익히고, 3) 실전 모의고사로 15문항을 이어 말합니다. 4) 녹음함에서 내 답을 다시 듣고, 멈춤 · 길이 · 연결어 추이를 봅니다."),
+      h("p",{class:"muted"},"문제: 새 문제 "+nq+"개"+(ac?" · 학원 질문 "+ac+"개":" · 학원 질문은 잠겨 있음")+" · 모범 답변 "+D.m.length+"개 · 표현 "+D.e.length+"개")),
+    h("div",{class:"card"},h("h2",null,"녹음과 받아쓰기"),h("p",{class:"muted"},"녹음은 이 기기 브라우저에만 저장됩니다. 말하는 동안 받아쓰기는 크롬에서 됩니다. 받아쓰기가 비면 녹음함에서 '정밀 받아쓰기' 를 누르세요(처음 한 번 모델을 내려받습니다). 멈춤 · 말한 시간은 소리로 직접 재므로 받아쓰기가 없어도 나옵니다.")));
+  recAll().then(function(list){if(!list.length)return;list.sort(function(a,b){return a.at<b.at?1:-1});M.append(trendCard(list.slice(0,30).reverse()))}).catch(function(){})};
+function trendCard(list){var w=320,hh=120,pad=20;var pts=list.filter(function(x){return x.a});if(pts.length<2)return h("div");
+  function line(key,max,color){var s=pts.map(function(x,i){var v=Math.min(max,x.a[key]||0);return (pad+i*(w-2*pad)/(pts.length-1)).toFixed(1)+","+(hh-pad-v/max*(hh-2*pad)).toFixed(1)}).join(" ");var p=document.createElementNS("http://www.w3.org/2000/svg","polyline");p.setAttribute("points",s);p.setAttribute("fill","none");p.setAttribute("stroke",color);p.setAttribute("stroke-width","2.5");return p}
+  var svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox","0 0 "+w+" "+hh);svg.setAttribute("class","chart");svg.append(line("active",150,"var(--accent)"),line("longest",6,"var(--no)"));
+  return h("div",{class:"card"},h("h2",null,"최근 답변 추이"),svg,h("div",{class:"muted"},"주황: 말한 시간(150초까지) · 빨강: 가장 긴 멈춤(6초까지). 주황은 올라가고 빨강은 내려가면 좋아지는 중입니다."))}
+// exam
+V.exam=function(){var lv=S.set.level,src=S.set.src;
+  var segL=h("div",{class:"seg"});[3,4,5,6].forEach(function(n){segL.append(h("button",{"aria-pressed":lv===n?"true":"false",onclick:function(){S.set.level=n;save();go("exam")}},"난이도 "+n))});
+  var segS=h("div",{class:"seg"});[["mix","섞기"],["new","새 문제"],["academy","학원"]].forEach(function(z){segS.append(h("button",{"aria-pressed":src===z[0]?"true":"false",onclick:function(){if(z[0]!=="new"&&!ACAD){toast("학원 자료 탭에서 먼저 암호를 넣으세요");}S.set.src=z[0];save();go("exam")}},z[1]))});
+  var chips=h("div",{class:"chips"});SURVEY_DEF.forEach(function(t){var on=S.set.survey.indexOf(t)>=0;chips.append(h("button",{class:"chip","aria-pressed":on?"true":"false",onclick:function(){var i=S.set.survey.indexOf(t);if(i>=0)S.set.survey.splice(i,1);else S.set.survey.push(t);save();go("exam")}},t))});
+  M.append(h("div",{class:"card"},h("h2",null,"실전 모의고사"),h("p",{class:"muted"},"실제처럼 질문은 소리로만 나옵니다. 질문이 끝나면 자동으로 녹음이 시작되고, 다시 듣기는 질문이 끝난 뒤 5초 안에 한 번만 됩니다. 7번 뒤에 난이도 재조정을 묻습니다."),
+    h("h3",null,"서베이 주제"),chips,h("h3",null,"난이도(Self Assessment)"),segL,h("h3",null,"문제 출처"),segS,
+    h("div",{style:"height:10px"}),h("button",{class:"btn primary wide",onclick:function(){var list=buildExam(S.set.level,S.set.src);if(list.length<12){toast("문제가 모자랍니다. 출처를 섞기로 바꾸세요");return}runExam(list)}},"시험 시작")));};
+function runExam(list){var i=0,res=[],t0=Date.now(),adj=null,cur=null,tick=null;
+  cleanup=function(){if(cur)cur.cancel();clearInterval(tick);stopSpeak()};
+  function next(){clear(M);foot(null);if(i===7&&adj===null){return adjust()}if(i>=list.length)return finish();var q=list[i];var replayLeft=1,replayBtn=null,repTimer=null;
+    var ava=h("div",{class:"ava talk"},h("div",{class:"face"},"Ava"),h("div",null,h("b",null,"Question "+(i+1)+" of "+list.length),h("div",{class:"muted",id:"exst"},"질문을 듣는 중")));
+    var total=h("span",{class:"hstat"},"");tick=setInterval(function(){total.textContent="경과 "+mmss((Date.now()-t0)/1000)+" / 40:00"},500);
+    var panel=recPanel(q,{showLive:false,onDone:function(r){var a=analyze(r,q);saveRec(r,q,"exam",a).then(function(rec){res.push({q:q,r:r,a:a,rec:rec});i++;clearInterval(tick);next()})}});
+    var text=h("div",{class:"card",hidden:!S.set.showText},h("div",{class:"qtext"},q.q));
+    replayBtn=h("button",{class:"btn navy",disabled:true,onclick:function(){if(replayLeft<1)return;replayLeft--;replayBtn.disabled=true;panel.cancel();ava.className="ava talk";document.getElementById("exst").textContent="다시 듣는 중";speak(q.q,afterQ)}},"다시 듣기");
+    function afterQ(){ava.className="ava listen";var st=document.getElementById("exst");if(st)st.textContent="답변하세요(녹음 중)";panel.startNow();if(replayLeft>0){replayBtn.disabled=false;clearTimeout(repTimer);repTimer=setTimeout(function(){replayBtn.disabled=true},5000)}}
+    M.append(h("div",{class:"card"},h("div",{class:"row",style:"justify-content:space-between"},ava,total)),text,h("div",{class:"row"},replayBtn,h("button",{class:"btn ghost",onclick:function(){text.hidden=!text.hidden}},"질문 글자")),panel);
+    cur=panel;foot([h("button",{class:"btn ghost",onclick:function(){if(confirm("시험을 그만둘까요? 답한 것까지는 녹음함에 있습니다."))go("box")}},"그만"),h("button",{class:"btn primary",onclick:function(){if(panel.isOn())panel.stopNow();else{res.push({q:q,skip:true});i++;clearInterval(tick);next()}}},"다음 문항")]);
+    setTimeout(function(){speak(q.q,afterQ)},500)}
+  function adjust(){M.append(h("div",{class:"card"},h("h2",null,"난이도 재조정"),h("p",{class:"muted"},"실제 시험처럼 7번 뒤에 고릅니다. 학원 권장은 '비슷한 질문' 입니다."),
+    h("div",{class:"row"},["쉬운 질문","비슷한 질문","어려운 질문"].map(function(z){return h("button",{class:"btn",onclick:function(){adj=z;next()}},z)}))))}
+  function finish(){cleanup=null;clearInterval(tick);var done=res.filter(function(x){return !x.skip});var tot=done.reduce(function(s,x){return s+x.a.active},0);
+    M.append(h("div",{class:"card"},h("h2",null,"모의고사 끝"),h("p",null,"답한 문항 "+done.length+" / "+list.length+" · 말한 시간 합계 "+mmss(tot)+" · 걸린 시간 "+mmss((Date.now()-t0)/1000)),
+      h("p",{class:"muted"},"넘긴 문항이 여러 개면 IL-IM1 로 떨어지기 쉽습니다(학원 · 후기 공통). 모든 문항에 40초 이상 말하는 것부터 맞추세요.")));
+    res.forEach(function(x,k){var c=h("div",{class:"card"},h("div",{class:"row"},h("b",null,"Q"+(k+1)),h("span",{class:"pill navy"},T15N[x.q.t15]||x.q.type)),h("div",{class:"qtext",style:"font-size:16px"},x.q.q));
+      if(x.skip)c.append(h("div",{class:"fb"},h("div",{class:"no"},"넘김")));else{c.append(h("audio",{controls:true,src:URL.createObjectURL(x.r.blob)}),metricTable(x.a),fbBlock(x.a,x.q),h("div",{class:"live"},x.r.text||"(받아쓰기 없음: 녹음함에서 정밀 받아쓰기)"))}
+      c.append(h("div",{class:"row"},h("button",{class:"btn ghost",onclick:function(){practice(x.q)}},"이 문항 다시 연습")));M.append(c)});
+    foot([h("button",{class:"btn",onclick:function(){go("box")}},"녹음함"),h("button",{class:"btn primary",onclick:function(){go("exam")}},"한 번 더")])}
+  next()}
+// type practice
+V.type=function(){var sel=S._t15==null?1:S._t15;var seg=h("div",{class:"chips"});T15N.forEach(function(n,t){seg.append(h("button",{class:"chip","aria-pressed":sel===t?"true":"false",onclick:function(){S._t15=t;go("type")}},t+". "+n))});
+  var pool=allQ().filter(function(x){return x.t15===sel});
+  M.append(h("div",{class:"card"},h("h2",null,"유형 연습"),h("p",{class:"muted"},"유형을 고르면 질문 하나가 나옵니다. 답한 뒤 점검 · 답변 틀 · 학원 템플릿 · 모범 답변을 함께 봅니다."),seg,h("p",{class:"muted"},"이 유형 질문 "+pool.length+"개"+(ACAD?"":" (학원 질문은 잠금 해제 후 추가)"))));
+  if(!pool.length){M.append(h("div",{class:"card"},"이 유형의 질문이 없습니다."));return}
+  var unseen=pool.filter(function(x){return !S.seen[x.id]});practice(pick(unseen.length?unseen:pool),true)};
+function practice(q,keep){if(!keep){clear(M);foot(null)}S.seen[q.id]=today();save();var after=h("div");
+  var panel=recPanel(q,{showLive:true,onDone:function(r){var a=analyze(r,q);saveRec(r,q,"type",a).then(function(rec){clear(after);after.append(resultBlock(r,q,a,rec),helpBlocks(q))})}});
+  M.append(qCard(q),panel,after);
+  foot([h("button",{class:"btn",onclick:function(){go(view==="type"?"type":view)}},"다른 질문"),h("button",{class:"btn ghost",onclick:function(){clear(after);after.append(helpBlocks(q))}},"틀 · 모범 답변 보기")])}
+function helpBlocks(q){var box=h("div",{style:"display:flex;flex-direction:column;gap:12px"});var f=frameFor(q.t15);if(f)box.append(frameCard(f));
+  academyDocs(q.t15).forEach(function(d){box.append(docCard(d))});modelsFor(q).slice(0,3).forEach(function(m){box.append(modelCard(m))});
+  var mine=S.scripts[q.t15];if(mine)box.append(h("div",{class:"card"},h("h2",null,"내 스크립트"),h("div",{class:"ans"},mine)));return box}
+// 3 rounds
+V.rep=function(){var pool=allQ();var q=pick(pool.filter(function(x){return x.type!=="intro"}));var limits=[120,90,60],round=0,rows=[];
+  var tbl=h("div");M.append(h("div",{class:"card"},h("h2",null,"3번 말하기"),h("p",{class:"muted"},"같은 질문에 2분, 1분 30초, 1분으로 시간을 줄여 세 번 답합니다. 같은 내용을 더 짧은 시간에 말하면서 막힘이 줄고 말이 빨라집니다(4/3/2 기법).")),qCard(q,{show:true}));
+  var holder=h("div");M.append(holder,tbl);
+  function one(){clear(holder);if(round>=3){return}holder.append(h("div",{class:"card"},h("b",null,(round+1)+"번째: "+mmss(limits[round])+" 안에")),recPanel(q,{limit:limits[round],showLive:true,onDone:function(r){var a=analyze(r,q);saveRec(r,q,"rep",a);rows.push(a);round++;draw();one()}}))}
+  function draw(){clear(tbl);tbl.append(h("div",{class:"card"},h("h2",null,"세 번 비교"),h("table",{class:"m"},h("tr",null,h("th",null,"회"),h("th",null,"말한 시간"),h("th",null,"최장 멈춤"),h("th",null,"분당 단어"),h("th",null,"단어 수")),
+    rows.map(function(a,i){return h("tr",null,h("td",null,(i+1)+"회"),h("td",null,mmss(a.active)),h("td",null,a.longest.toFixed(1)+"초"),h("td",null,a.hasText?Math.round(a.wpm):"-"),h("td",null,a.hasText?a.words:"-"))})),
+    rows.length===3?h("p",{class:"muted"},"3회째에 분당 단어가 늘고 멈춤이 줄었으면 성공입니다."):null))}
+  one();foot([h("button",{class:"btn",onclick:function(){go("rep")}},"다른 질문")])};
+// shadowing
+V.shadow=function(){var sel=S._sh||null;var list=D.m;if(!list.length){M.append(h("div",{class:"card"},"모범 답변이 없습니다."));return}
+  var m=list.filter(function(x){return x.id===sel})[0]||pick(list);S._sh=m.id;var sents=m.a.match(/[^.!?]+[.!?]+/g)||[m.a];
+  M.append(h("div",{class:"card"},h("h2",null,"섀도잉"),h("p",{class:"muted"},"한 문장씩 듣고 똑같이 따라 말합니다. 말한 것을 받아써서 맞은 단어는 초록, 빠진 단어는 빨강으로 보여 줍니다."),h("div",{class:"row"},h("span",{class:"pill acc"},m.lv),h("span",{class:"pill navy"},T15N[m.t15]),h("button",{class:"btn ghost",onclick:function(){S._sh=null;go("shadow")}},"다른 답변"))));
+  sents.forEach(function(s){s=s.trim();var res=h("div",{class:"live",hidden:true});var ctl=null;var b=h("button",{class:"btn rec"},"● 따라 말하기");
+    b.onclick=function(){if(ctl){var c=ctl;ctl=null;b.disabled=true;c.stop().then(function(r){b.disabled=false;b.textContent="● 다시";res.hidden=false;clear(res);if(!r.text){res.append("받아쓰기가 비었습니다(크롬에서 말하는 동안 받아쓰기를 켜 두세요).");return}var sc=matchWords(s,r.text);res.append(sc.node,h("div",{class:"muted"},"일치 "+Math.round(sc.pct)+"%"));logAdd(r.dur)})}
+      else startRec({}).then(function(c){ctl=c;b.textContent="■ 끝"}).catch(function(e){toast("마이크를 쓸 수 없습니다")})};
+    M.append(h("div",{class:"card"},h("div",{class:"ans"},s),h("div",{class:"row",style:"margin-top:8px"},h("button",{class:"btn navy",onclick:function(){speak(s,null,S.set.rate)}},"▶ 듣기"),h("button",{class:"btn ghost",onclick:function(){speak(s,null,0.75)}},"천천히"),b),res))})};
+function matchWords(ref,said){var a=words(ref),b=words(said);var n=a.length,m=b.length,dp=[];for(var i=0;i<=n;i++){dp.push(new Array(m+1).fill(0))}
+  for(i=1;i<=n;i++)for(var j=1;j<=m;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]+1:Math.max(dp[i-1][j],dp[i][j-1]);
+  var hit={},ii=n,jj=m;while(ii>0&&jj>0){if(a[ii-1]===b[jj-1]){hit[ii-1]=1;ii--;jj--}else if(dp[ii-1][jj]>=dp[ii][jj-1])ii--;else jj--}
+  var node=h("div",null);a.forEach(function(w,k){node.append(h("span",{class:hit[k]?"word-hit":"word-miss"},w)," ")});return{node:node,pct:n?100*dp[n][m]/n:0}}
+// listening quiz
+V.listen=function(){var pool=allQ().filter(function(x){return x.type!=="intro"});var q=pick(pool);var types=Object.keys(T15N).map(Number);var opts=shuffle([q.t15].concat(shuffle(types.filter(function(t){return t!==q.t15&&t!==0})).slice(0,3)));
+  var reveal=h("div",{hidden:true},h("div",{class:"qtext"},q.q),q.ko?h("div",{class:"muted"},q.ko):null,q.cue?h("div",{class:"muted"},"잡을 것: "+q.cue):null);
+  var fb=h("div");M.append(h("div",{class:"card"},h("h2",null,"질문 알아듣기"),h("p",{class:"muted"},"실제 시험처럼 글자 없이 듣고, 무슨 유형인지 고릅니다. 첫 번째에 상황 · 시제 신호, 두 번째에 묻는 것의 개수를 잡으세요."),
+    h("div",{class:"row"},h("button",{class:"btn navy",onclick:function(){speak(q.q)}},"▶ 듣기"),h("button",{class:"btn ghost",onclick:function(){speak(q.q,null,0.8)}},"천천히"))),
+    h("div",{class:"card"},h("b",null,"이 질문의 유형은?"),h("div",{class:"chips",style:"margin-top:8px"},opts.map(function(t){return h("button",{class:"chip",onclick:function(){clear(fb);fb.append(h("div",{class:"fb"},h("div",{class:t===q.t15?"ok":"no"},(t===q.t15?"맞았습니다: ":"정답: ")+T15N[q.t15])));reveal.hidden=false}},T15N[t])})),fb,reveal));
+  setTimeout(function(){speak(q.q)},400);foot([h("button",{class:"btn primary",onclick:function(){go("listen")}},"다음 질문")])};
+// expressions
+V.expr=function(){var cats=[];D.e.forEach(function(x){if(cats.indexOf(x.cat)<0)cats.push(x.cat)});var sel=S._ec||cats[0];var seg=h("div",{class:"chips"});cats.forEach(function(c){seg.append(h("button",{class:"chip","aria-pressed":sel===c?"true":"false",onclick:function(){S._ec=c;go("expr")}},c))});
+  var list=D.e.filter(function(x){return x.cat===sel});var known=list.filter(function(x){return S.known[x.id]}).length;
+  M.append(h("div",{class:"card"},h("h2",null,"표현 카드"),seg,h("p",{class:"muted"},"외운 것 "+known+" / "+list.length+". 뜻을 보고 영어를 먼저 말해 본 뒤 눌러 확인하세요.")));
+  list.forEach(function(x){var en=h("div",{class:"qtext",hidden:!!S._eHide},x.en);var k=h("button",{class:"chip","aria-pressed":S.known[x.id]?"true":"false",onclick:function(){S.known[x.id]=!S.known[x.id];save();k.setAttribute("aria-pressed",S.known[x.id]?"true":"false")}},"외움");
+    M.append(h("div",{class:"card"},h("div",{class:"row",style:"justify-content:space-between"},h("b",null,x.ko),k),en,h("div",{class:"muted"},x.note),h("div",{class:"row"},h("button",{class:"btn ghost",onclick:function(){en.hidden=false;speak(x.en)}},"▶ 영어 듣기"))))});
+  foot([h("button",{class:"btn",onclick:function(){S._eHide=!S._eHide;go("expr")}},S._eHide?"영어 보이기":"영어 가리기(퀴즈)")])};
+// academy
+V.acad=function(){if(!ACAD){var inp=h("input",{type:"password",placeholder:"학원 자료 암호",autocomplete:"current-password"});var rem=h("input",{type:"checkbox",checked:true});var msg=h("div",{class:"muted"});
+    M.append(h("div",{class:"card"},h("h2",null,"학원 자료(잠김)"),h("p",{class:"muted"},"학원 15유형 프레임 · 완성 답변 · 강의 노트 표현 · 발음 자료 · 교재 질문 230개가 암호로 잠겨 있습니다. 본인만 쓰는 자료라 공개 주소로는 열리지 않습니다."),inp,h("label",{class:"row muted",style:"margin:8px 0"},rem,"이 기기에서 기억하기"),
+      h("button",{class:"btn primary wide",onclick:function(){msg.textContent="여는 중";unlock(inp.value).then(function(){if(rem.checked){try{localStorage.setItem("opic.pass",inp.value)}catch(e){}}toast("학원 자료를 열었습니다");go("acad")}).catch(function(e){msg.textContent=e.message})}},"열기"),msg));return}
+  var sel=S._at==null?1:S._at;var seg=h("div",{class:"chips"});T15N.forEach(function(n,t){seg.append(h("button",{class:"chip","aria-pressed":sel===t?"true":"false",onclick:function(){S._at=t;go("acad")}},t+". "+n))});
+  M.append(h("div",{class:"card"},h("h2",null,"학원 자료"),seg,h("p",{class:"muted"},"유형을 고르면 교재 템플릿 · 완성 답변 · 전략 · 표현이 나옵니다. 아래 질문은 눌러서 바로 연습할 수 있습니다.")));
+  ACAD.docs.filter(function(d){return d.t15===sel}).forEach(function(d){M.append(docCard(d))});
+  var qs=academyQ().filter(function(x){return x.t15===sel});M.append(h("div",{class:"card"},h("h2",null,"교재 질문 "+qs.length+"개"),qs.map(function(q){return h("div",{class:"recitem"},h("div",{class:"muted"},q.topic_ko),h("div",{class:"qtext",style:"font-size:16px"},q.q),h("div",{class:"row"},h("button",{class:"btn ghost",onclick:function(){speak(q.q)}},"▶ 듣기"),h("button",{class:"btn ghost",onclick:function(){practice(q)}},"연습")))})));
+  var extra=ACAD.docs.filter(function(d){return d.t15==null});if(extra.length)M.append(h("div",{class:"card"},h("h2",null,"공통 · 발음 자료"),extra.map(docCard)));
+  foot([h("button",{class:"btn ghost",onclick:function(){try{localStorage.removeItem("opic.pass")}catch(e){}ACAD=null;go("acad")}},"이 기기에서 잠그기")])};
+// my scripts
+V.mine=function(){var sel=S._mt==null?1:S._mt;var seg=h("div",{class:"chips"});T15N.forEach(function(n,t){seg.append(h("button",{class:"chip","aria-pressed":sel===t?"true":"false",onclick:function(){S._mt=t;go("mine")}},t+". "+n+(S.scripts[t]?" ✓":"")))});
+  var ta=h("textarea",{placeholder:"이 유형에 쓸 내 답변(영어)이나 키워드를 적어 두세요. 이 기기에만 저장됩니다."});ta.value=S.scripts[sel]||"";ta.addEventListener("input",function(){S.scripts[sel]=ta.value;save()});
+  var kw=h("div",{class:"ans",hidden:true});
+  M.append(h("div",{class:"card"},h("h2",null,"내 스크립트"),h("p",{class:"muted"},"외운 문장을 그대로 읽으면 감점 신호가 됩니다. 문장 대신 '키워드만 보기' 로 흐름만 보고 말하는 연습을 하세요."),seg),h("div",{class:"card"},ta,h("div",{class:"row",style:"margin-top:8px"},
+    h("button",{class:"btn",onclick:function(){var s=(ta.value.match(/[^.!?\n]+[.!?\n]*/g)||[]).map(function(x){return x.trim().split(/\s+/).slice(0,3).join(" ")+" ..."});kw.hidden=!kw.hidden;clear(kw);s.forEach(function(x){kw.append(h("div",null,x))})}},"키워드만 보기"),
+    h("button",{class:"btn ghost",onclick:function(){speak(ta.value)}},"▶ 읽어 주기")),kw));
+  var pool=allQ().filter(function(x){return x.t15===sel});if(pool.length)M.append(h("div",{class:"row"},h("button",{class:"btn primary",onclick:function(){practice(pick(pool))}},"이 유형 질문으로 말해 보기")))};
+// recordings box
+V.box=function(){var holder=h("div",{style:"display:flex;flex-direction:column;gap:12px"});M.append(holder);
+  recAll().then(function(list){list.sort(function(a,b){return a.at<b.at?1:-1});if(!list.length){holder.append(h("div",{class:"card"},"아직 녹음이 없습니다."));return}
+    holder.append(trendCard(list.slice(0,30).reverse()));var card=h("div",{class:"card"},h("h2",null,"녹음 "+list.length+"개"));holder.append(card);
+    list.forEach(function(x){var url=URL.createObjectURL(x.blob);var a=x.a;var tx=h("div",{class:"live",hidden:true},x.text||"(받아쓰기 없음)");
+      var wb=h("button",{class:"btn ghost",onclick:function(){wb.disabled=true;whisper(x.blob,function(s){wb.textContent=s}).then(function(t){x.text=t;var q={id:x.qid,q:x.q,t15:x.t15,type:T15TYPE[x.t15]};x.a=analyze({dur:x.dur,levels:expand(x.levels),text:t,sr:"whisper"},q);recPut(x);tx.textContent=t;tx.hidden=false;wb.textContent="받아쓰기 완료"}).catch(function(e){wb.disabled=false;wb.textContent="실패: "+(e.message||e)})}},"정밀 받아쓰기");
+      card.append(h("div",{class:"recitem"},h("div",{class:"row",style:"justify-content:space-between"},h("span",{class:"muted"},x.at.slice(0,16).replace("T"," ")),h("span",{class:"pill"},{exam:"모의고사",type:"유형",rep:"3번",mic:"마이크"}[x.mode]||x.mode),x.t15!=null?h("span",{class:"pill navy"},T15N[x.t15]):null),
+        h("div",{class:"muted"},x.q?x.q.slice(0,90)+(x.q.length>90?"...":""):""),h("audio",{controls:true,preload:"none",src:url}),a?metricTable(a):null,tx,
+        h("div",{class:"row"},h("button",{class:"btn ghost",onclick:function(){tx.hidden=!tx.hidden}},"받아쓰기"),wb,h("a",{class:"btn ghost",href:url,download:"opic_"+x.at.slice(0,16).replace(/[-:T]/g,"")+"."+((x.mime||"").indexOf("mp4")>=0?"m4a":"webm")},"내려받기"),
+          h("button",{class:"btn ghost",onclick:function(){if(!confirm("이 녹음을 지울까요?"))return;recDel(x.id).then(function(){go("box")})}},"지우기"))))})}).catch(function(e){holder.append(h("div",{class:"card"},"녹음함을 열 수 없습니다: "+e.message))})};
+function expand(l){var o=[];(l||[]).forEach(function(v){o.push(v,v,v,v)});return o}
+// settings
+V.set=function(){var sel=h("select");sel.append(h("option",{value:""},"자동(미국 여성 음성 우선)"));VOICES.forEach(function(v){sel.append(h("option",{value:v.name,selected:S.set.voice===v.name},v.name+" ("+v.lang+")"))});sel.onchange=function(){S.set.voice=sel.value;save();speak("Hi, I'm Ava. Let's start the interview.")};
+  var rs=h("div",{class:"seg"});[[0.8,"느리게"],[0.95,"보통"],[1.05,"실전"],[1.15,"빠르게"]].forEach(function(z){rs.append(h("button",{"aria-pressed":S.set.rate===z[0]?"true":"false",onclick:function(){S.set.rate=z[0];save();speak("Tell me about the place you live.");go("set")}},z[1]))});
+  var sr=h("div",{class:"seg"});[[true,"말하는 동안 받아쓰기 켬"],[false,"끔"]].forEach(function(z){sr.append(h("button",{"aria-pressed":S.set.liveSR===z[0]?"true":"false",onclick:function(){S.set.liveSR=z[0];save();go("set")}},z[1]))});
+  var st=h("div",{class:"seg"});[[false,"질문 글자 숨김(실전)"],[true,"질문 글자 보임"]].forEach(function(z){st.append(h("button",{"aria-pressed":S.set.showText===z[0]?"true":"false",onclick:function(){S.set.showText=z[0];save();go("set")}},z[1]))});
+  var wm=h("div",{class:"seg"});[["Xenova/whisper-tiny.en","정밀 받아쓰기: 빠름(약 40MB)"],["Xenova/whisper-base.en","정확(약 80MB)"]].forEach(function(z){wm.append(h("button",{"aria-pressed":S.set.whisper===z[0]?"true":"false",onclick:function(){S.set.whisper=z[0];WH=null;save();go("set")}},z[1]))});
+  var micRes=h("div");var micBox=recPanel(null,{limit:8,showLive:true,onDone:function(r){clear(micRes);var a=analyze(r,null);micRes.append(h("audio",{controls:true,src:URL.createObjectURL(r.blob)}),h("div",{class:"muted"},"말한 시간 "+a.active.toFixed(1)+"초 · 받아쓰기: "+(r.text||"없음")+" · 받아쓰기 상태: "+r.sr))}});
+  var est=h("div",{class:"muted"});if(navigator.storage&&navigator.storage.estimate)navigator.storage.estimate().then(function(e){est.textContent="사용 중 "+Math.round(e.usage/1048576)+"MB / 가능 "+Math.round(e.quota/1048576)+"MB"});
+  M.append(h("div",{class:"card"},h("h2",null,"Ava 음성"),sel,h("div",{style:"height:8px"}),rs),h("div",{class:"card"},h("h2",null,"받아쓰기"),sr,h("p",{class:"muted"},srClass()?"이 브라우저는 말하는 동안 받아쓰기를 지원합니다.":"이 브라우저는 말하는 동안 받아쓰기를 지원하지 않습니다. 녹음 뒤 정밀 받아쓰기를 쓰세요."),wm,h("p",{class:"muted"},"정밀 받아쓰기는 이 기기 안에서 Whisper 모델로 받아씁니다. 처음 한 번 모델을 내려받고, 그다음부터는 저장된 것을 씁니다.")),
+    h("div",{class:"card"},h("h2",null,"질문 글자"),st),h("div",{class:"card"},h("h2",null,"마이크 시험(8초)"),micBox,micRes),
+    h("div",{class:"card"},h("h2",null,"저장 공간"),est,h("div",{class:"row",style:"margin-top:8px"},h("button",{class:"btn",onclick:function(){var a=h("a",{href:URL.createObjectURL(new Blob([JSON.stringify({app:"opic",v:1,at:new Date().toISOString(),data:S})],{type:"application/json"})),download:"오픽_기록_"+today()+".json"});document.body.append(a);a.click();a.remove()}},"설정 · 스크립트 내보내기"),
+      (function(){var f=h("input",{type:"file",accept:".json",hidden:true});f.onchange=function(){var r=new FileReader();r.onload=function(){try{var o=JSON.parse(String(r.result));if(o.app!=="opic")throw 0;S=Object.assign(load(),o.data);save();toast("가져왔습니다");go("set")}catch(e){toast("이 사이트의 파일이 아닙니다")}};if(f.files[0])r.readAsText(f.files[0])};return h("span",null,f,h("button",{class:"btn",onclick:function(){f.click()}},"가져오기"))})(),
+      h("button",{class:"btn ghost",onclick:function(){if(!confirm("녹음을 모두 지울까요?"))return;recAll().then(function(l){return Promise.all(l.map(function(x){return recDel(x.id)}))}).then(function(){toast("지웠습니다");go("set")})}},"녹음 모두 지우기"))))};
+// ---------- start ----------
+hstat();autoUnlock().then(function(){go("home")});
+if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
+})();
+</script>
+</body>
+</html>
