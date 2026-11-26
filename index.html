@@ -96,7 +96,7 @@ svg.chart{width:100%;height:140px}
   <main id="main"></main>
 </div>
 <div class="foot" id="foot" hidden><div class="in" id="footIn"></div></div>
-<script src="data/opic_data.js?v=a1384b7971"></script>
+<script src="data/opic_data.js?v=844fc9f8dc"></script>
 <script>
 "use strict";
 (function(){
@@ -353,12 +353,26 @@ V.cram=function(){var quiz=!!S._cq;
     h("h3",null,"IM 으로 올리려면"),
     ["문장을 and, so, because, then 으로 이어서 1분 넘게 말한다.","과거 질문은 과거형으로 끝까지 말한다.","롤플레이 11 · 12번을 비우지 않는다(질문 3개, 대안 2개)."].map(function(t){return h("div",{style:"padding:4px 0;border-top:1px solid var(--line)"},"• "+t)}),
     h("p",{class:"muted",style:"margin-top:8px"},"근거: ACTFL Proficiency Guidelines 2024(NH 15쪽, IL · IM 17-18쪽). IM1 · IM2 · IM3 를 나누는 공식 기준은 공개된 것이 없어, IM 안의 구분은 학원 · 후기 설명을 바탕으로 쉽게 풀어 쓴 것입니다.")));
-  // 2. flow table
-  M.append(h("div",{class:"card"},h("h2",null,"2. 1-15번 순서와 유형"),h("table",{class:"m"},h("tr",null,h("th",null,"번호"),h("th",null,"나오는 것"),h("th",null,"알아듣는 신호 · 시제")),
-    FLOW.map(function(r){return h("tr",null,h("td",{style:"white-space:nowrap"},h("b",null,r[0])),h("td",null,r[1],r[5]?h("div",{class:"muted"},r[5]):null,r[2].length?h("div",{class:"chips",style:"margin-top:4px"},r[2].map(function(t){return h("a",{class:"pill navy",href:"#t"+t,style:"text-decoration:none"},T15N[t])})):null),h("td",{class:"muted"},r[3],r[4]?h("div",null,"시제: "+r[4]):null))}))));
-  // 3. one frame per type
-  M.append(h("div",{class:"card",id:"types"},h("h2",null,"3. 유형별 외울 틀 (빈칸에 내 단어만 바꿔 넣기)"),h("p",{class:"muted"},"번호는 학원 15유형 번호입니다. 각 줄이 말하는 순서이고, ___ 자리에 오늘 쓸 단어를 넣습니다.")));
-  var order=[0,1,5,3,4,6,7,2,8,9,11,12,13,14,15,10];
+  // 2. my exam plan (difficulty 3; user 2026-11-26)
+  var PLAN=[["1","자기소개","내 이야기: 대학원생 · 산책 · 일월저수지",[0]],
+    ["2-4","서베이 주제 1: 묘사 → 습관 → 경험","산책 · 일월저수지 (습관은 First · Then · After that 만 붙이기)",[5,1,2]],
+    ["5-7","서베이 주제 2: 묘사 → 습관 → 경험","음악(J-pop) · 영화(스파이더맨 · 애니) · 카페(학교 안) 중 나온 것",[1,8,2]],
+    ["(7 뒤)","난이도 재조정","'비슷한 질문' 고르기",[]],
+    ["8-10","돌발 주제: 묘사 → 습관 → 경험","휴대폰(S24 울트라) · 이어폰(버즈 라이브), 모르면 완주 공식",[3,9]],
+    ["11","롤플레이: 질문 3-4개","Hi, I'm calling about ___. 로 시작",[11]],
+    ["12","롤플레이: 문제 해결 · 대안 2개","I'm really sorry, but ___. How about ___?",[12]],
+    ["13","롤플레이: 비슷한 경험","과거형으로 짧게: 이탈리아 · 콘서트 등",[13]],
+    ["14","롤플레이(난이도 3)","롤플레이 완주 공식 그대로",[11,12]],
+    ["15","에바에게 질문하기(난이도 3)","Oh, you like ___ too? 로 시작해 질문 3개",[10]]];
+  M.append(h("div",{class:"card",style:"border:2px solid var(--navy)"},h("h2",null,"2. 내 시험 순서 (난이도 3)"),h("table",{class:"m"},h("tr",null,h("th",null,"번호"),h("th",null,"나오는 것"),h("th",null,"내가 쓸 이야기")),
+    PLAN.map(function(r){return h("tr",null,h("td",{style:"white-space:nowrap"},h("b",null,r[0])),h("td",null,r[1],r[3].length?h("div",{class:"chips",style:"margin-top:4px"},r[3].map(function(t){return h("a",{class:"pill navy",href:"#t"+t,style:"text-decoration:none"},T15N[t])})):null),h("td",null,r[2]))}))));
+  // 2-2. generic flow with listening signals (collapsed in easy mode)
+  var flowBox=h("div",{hidden:S._hard!==true},h("table",{class:"m"},h("tr",null,h("th",null,"번호"),h("th",null,"나오는 것"),h("th",null,"알아듣는 신호 · 시제")),
+    FLOW.map(function(r){return h("tr",null,h("td",{style:"white-space:nowrap"},h("b",null,r[0])),h("td",null,r[1],r[5]?h("div",{class:"muted"},r[5]):null,r[2].length?h("div",{class:"chips",style:"margin-top:4px"},r[2].map(function(t){return h("a",{class:"pill navy",href:"#t"+t,style:"text-decoration:none"},T15N[t])})):null),h("td",{class:"muted"},r[3],r[4]?h("div",null,"시제: "+r[4]):null))})));
+  M.append(h("div",{class:"card"},h("div",{class:"row",style:"justify-content:space-between"},h("h2",{style:"margin:0"},"2-2. 알아듣는 신호(일반 순서)"),S._hard!==true?h("button",{class:"btn ghost",onclick:function(){flowBox.hidden=!flowBox.hidden}},"펼치기"):null),flowBox));
+  // 3. one frame per type, in the order the exam asks them
+  M.append(h("div",{class:"card",id:"types"},h("h2",null,"3. 시험 순서대로 외울 틀 (빈칸에 내 단어만)"),h("p",{class:"muted"},"자기소개 → 묘사 → 경험 → 롤플레이 → 에바에게 질문 순입니다. 맨 끝 14 · 15(비교 · 이슈)는 난이도 5 용이라 이번에는 건너뛰어도 됩니다.")));
+  var order=[0,5,1,3,4,2,9,8,7,6,11,12,13,10,14,15];
   order.forEach(function(t){var f=frameFor(t);if(!f)return;
     if(t===6&&S._hard!==true){M.append(h("div",{class:"card",id:"t6"},h("h2",null,"6. 시간순서(넘어감)"),h("p",{class:"muted"},"따로 외우지 않습니다. 루틴 질문이 나오면 1번 활동묘사 답에 순서 말만 붙이세요: First, Then, After that, Finally."),line("First, I put on my earphones. Then, I walk around Ilwol Reservoir. After that, I sit on a bench and watch YouTube. Finally, I go back home.","이렇게 말하면 됩니다")));return}var exs=(D.x||[]).filter(function(x){return x.t15===t});
     var easy=S._hard!==true;var exBox=exs.length?h("div",{hidden:!easy},h("div",{class:"muted",style:"margin-top:6px"},"위 틀 문장 그대로이고, 색칠한 곳만 내 단어로 바꾼 것입니다."),(easy?(exs.filter(function(x){return x.mine}).length?exs.filter(function(x){return x.mine}):exs.slice(0,1)):exs).map(function(x){return fillCard(f,x)})):null;
