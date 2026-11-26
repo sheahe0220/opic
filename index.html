@@ -96,7 +96,7 @@ svg.chart{width:100%;height:140px}
   <main id="main"></main>
 </div>
 <div class="foot" id="foot" hidden><div class="in" id="footIn"></div></div>
-<script src="data/opic_data.js?v=844fc9f8dc"></script>
+<script src="data/opic_data.js?v=94b8822937"></script>
 <script>
 "use strict";
 (function(){
@@ -391,12 +391,12 @@ V.cram=function(){var quiz=!!S._cq;
       aq.length?h("div",null,h("span",{class:"pill acc"},"교재 기출 질문"),aq.map(function(q){return h("div",{style:"padding:4px 0"},h("div",{class:"qtext",style:"font-size:15.5px"},q.q),h("div",{class:"row"},sp(q.q),h("button",{class:"btn ghost",style:"min-height:34px;padding:2px 10px",onclick:function(){practice(q)}},"이 질문 연습")))})):null):null;
     var acBox=aT?h("div",{hidden:true},mdBlock(aT.md)):null;
     M.append(h("div",{class:"card",id:"t"+t},h("div",{class:"row",style:"justify-content:space-between"},h("h2",{style:"margin:0"},t+". "+f.name_ko),h("span",{class:"pill acc"},T15TYPE[t])),
-      h("div",{class:"muted",style:"margin:4px 0 6px"},"이럴 때: "+f.when),acadBox,
+      h("div",{class:"muted",style:"margin:4px 0 6px"},"이럴 때: "+f.when),easy?null:acadBox,
       h("span",{class:"pill navy"},easy?"외울 틀 (빈칸에 내 단어만)":acadBox?"쉬운 틀 (위와 같은 순서, 짧은 문장)":"외울 틀"),
       f.steps.map(function(s){return line(s.en,s.ko)}),
       f.tips&&f.tips.length?h("div",{class:"muted",style:"margin-top:6px"},"요령: "+f.tips[0]):null,
-      h("div",{class:"row",style:"margin-top:6px"},exBox?h("button",{class:"btn ghost",onclick:function(){exBox.hidden=!exBox.hidden}},"예시 답 보기"):null,acadBox&&easy?h("button",{class:"btn ghost",onclick:function(){acadBox.hidden=!acadBox.hidden}},"학원 자료 펼치기"):null,acBox&&!easy?h("button",{class:"btn ghost",onclick:function(){acBox.hidden=!acBox.hidden}},"학원 자료 전체"):null,
-        h("button",{class:"btn ghost",onclick:function(){var pool=allQ().filter(function(x){return x.t15===t});if(pool.length)practice(pick(pool))}},"이 유형 한 번 말해 보기")),exBox,acBox))});
+      h("div",{class:"row",style:"margin-top:6px"},exBox?h("button",{class:"btn ghost",onclick:function(){exBox.hidden=!exBox.hidden}},"예시 답 보기"):null,acadBox&&easy?h("button",{class:"btn ghost",onclick:function(ev){var b=ev.currentTarget;acadBox.hidden=!acadBox.hidden;b.textContent=acadBox.hidden?"학원 자료 펼치기":"학원 자료 접기";if(!acadBox.hidden)acadBox.scrollIntoView({behavior:"smooth",block:"start"})}},"학원 자료 펼치기"):null,acBox&&!easy?h("button",{class:"btn ghost",onclick:function(){acBox.hidden=!acBox.hidden}},"학원 자료 전체"):null,
+        h("button",{class:"btn ghost",onclick:function(){var pool=allQ().filter(function(x){return x.t15===t});if(pool.length)practice(pick(pool))}},"이 유형 한 번 말해 보기")),easy?acadBox:null,exBox,acBox))});
   // 4. all-purpose lines (academy common expressions first, then our cards)
   var lines=h("div",{class:"card",id:"lines"},h("h2",null,"4. 어디서나 쓰는 만능 문장"));
   if(ACAD){ACAD.docs.filter(function(d){return /공통 표현/.test(d.title)}).forEach(function(d){var box=h("div",{hidden:S._hard!==true},mdBlock(d.md));
