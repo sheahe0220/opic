@@ -96,7 +96,7 @@ svg.chart{width:100%;height:140px}
   <main id="main"></main>
 </div>
 <div class="foot" id="foot" hidden><div class="in" id="footIn"></div></div>
-<script src="data/opic_data.js?v=d01750d854"></script>
+<script src="data/opic_data.js?v=3846c02f1f"></script>
 <script>
 "use strict";
 (function(){
@@ -257,6 +257,7 @@ function metricTable(a){return h("table",{class:"m"},h("tr",null,h("th",null,"�
 function fbBlock(a,q){var g=levelGuess(a);return h("div",{class:"fb"},feedback(a,q).map(function(x){return h("div",{class:x.k},x.m)}),g?h("div",{class:"muted"},"자동 점검으로 본 대략의 위치: "+g+" (참고용, 공식 점수와 다를 수 있음)"):null)}
 function modelsFor(q){var t=q.t15;var list=D.m.filter(function(m){return m.t15===t});var same=list.filter(function(m){return m.qid===q.id});return same.concat(list.filter(function(m){return same.indexOf(m)<0}))}
 function frameFor(t){return D.f.filter(function(f){return f.t15===t})[0]||null}
+function QX(){if(!QX._m){QX._m={};(D.x||[]).forEach(function(x){if(x.qid)QX._m[x.qid]=x})}return QX._m}
 function frameCard(f){if(!f)return null;return h("div",{class:"card"},h("h2",null,"답변 틀: "+f.name_ko),h("p",{class:"muted"},f.when),
   f.steps.map(function(s,i){return h("div",{style:"margin:6px 0"},h("b",null,(i+1)+". "+s.ko),h("div",{class:"ans",style:"margin-top:4px"},s.en))}),
   f.tips&&f.tips.length?h("div",null,h("h3",null,"요령"),f.tips.map(function(t){return h("div",{class:"muted"},"• "+t)})):null,
@@ -318,7 +319,8 @@ function fillCard(f,x){var lines=f.steps.map(function(s,i){return fillLine(s.en,
     lines.map(function(l){return h("div",{style:"margin:3px 0"},l.node)}))}
 var CRAM_CATS=["시작 · 시간 벌기","되묻기 · 정정","연결어","시간 · 순서","과거 경험","감정 · 소감","묘사","비교 · 변화","의견 · 이슈","롤플레이 질문","롤플레이 문제 해결","마무리"];
 V.cram=function(){var quiz=!!S._cq;
-  function line(en,ko){var e=h("div",{class:"qtext",style:"font-size:16.5px",hidden:quiz},en);var row=h("div",{style:"padding:6px 0;border-top:1px solid var(--line)",onclick:function(){if(e.hidden){e.hidden=false}speak(en.replace(/_{2,}/g,"something").replace(/\s\/\s/g,". "))}},ko?h("div",{class:"muted"},ko):null,e);return row}
+  // alternatives "A / B / C" (past, month, year, in person) go on their own smaller lines so the main line stays short
+  function line(en,ko){var ps=en.split(" / ");var e=h("div",{class:"qtext",style:"font-size:16.5px",hidden:quiz},ps[0],ps.slice(1).map(function(p){return h("div",{class:"muted",style:"font-size:14.5px;margin-top:2px"},"또는 "+p)}));var row=h("div",{style:"padding:6px 0;border-top:1px solid var(--line)",onclick:function(){if(e.hidden){e.hidden=false}speak(en.replace(/_{2,}/g,"something").replace(/\s\/\s/g,". "))}},ko?h("div",{class:"muted"},ko):null,e);return row}
   M.append(h("div",{class:"card"},h("h2",null,"오픽 당일 보기"),h("p",{class:"muted"},"시험장 가기 전에 위에서부터 훑으세요. 문장을 누르면 소리로 읽어 줍니다. '외우기 모드' 를 켜면 영어가 가려지고, 한국어를 보고 먼저 말한 뒤 눌러 확인합니다."),
     h("div",{class:"seg",style:"margin-bottom:8px"},h("button",{"aria-pressed":S._hard!==true?"true":"false",onclick:function(){S._hard=false;go("cram")}},"쉬운 보기(첫 시험)"),h("button",{"aria-pressed":S._hard===true?"true":"false",onclick:function(){S._hard=true;go("cram")}},"학원 자료까지 전부")),h("div",{class:"row"},h("button",{class:"btn "+(quiz?"primary":""),onclick:function(){S._cq=!quiz;go("cram")}},quiz?"외우기 모드 끄기":"외우기 모드 켜기"),h("a",{class:"btn ghost",href:"#types"},"유형별 틀로"),h("a",{class:"btn ghost",href:"#lines"},"만능 문장으로"))));
   // 0. finish-every-question lines (user 2026-11-26: first test, finish all 15, short is fine)
@@ -381,8 +383,13 @@ V.cram=function(){var quiz=!!S._cq;
   M.append(h("div",{class:"card",id:"types"},h("h2",null,"3. 시험 순서대로 외울 틀 (빈칸에 내 단어만)"),h("p",{class:"muted"},"자기소개 → 묘사 → 경험 → 롤플레이 → 에바에게 질문 순입니다. 맨 끝 14 · 15(비교 · 이슈)는 난이도 5 용이라 이번에는 건너뛰어도 됩니다.")));
   var order=[0,5,1,3,4,2,9,8,7,6,11,12,13,10,14,15];
   order.forEach(function(t){var f=frameFor(t);if(!f)return;
-    if(t===6&&S._hard!==true){M.append(h("div",{class:"card",id:"t6"},h("h2",null,"6. 시간순서(넘어감)"),h("p",{class:"muted"},"따로 외우지 않습니다. 루틴 질문이 나오면 1번 활동묘사 답에 순서 말만 붙이세요: First, Then, After that, Finally."),line("First, I put on my earphones. Then, I walk around Ilwol Reservoir. After that, I sit on a bench and watch YouTube. Finally, I go back home.","이렇게 말하면 됩니다")));return}var exs=(D.x||[]).filter(function(x){return x.t15===t});
-    var easy=S._hard!==true;var exBox=exs.length?h("div",{hidden:true},h("div",{class:"muted",style:"margin-top:6px"},"위 틀 문장 그대로이고, 색칠한 곳만 내 단어로 바꾼 것입니다."),(easy?(exs.filter(function(x){return x.mine}).length?exs.filter(function(x){return x.mine}):exs.slice(0,1)):exs).map(function(x){return fillCard(f,x)})):null;
+    if(t===6&&S._hard!==true){M.append(h("div",{class:"card",id:"t6"},h("h2",null,"6. 시간순서(넘어감)"),h("p",{class:"muted"},"따로 외우지 않습니다. 루틴 질문이 나오면 1번 활동묘사 답에 순서 말만 붙이세요: First, Then, After that, Finally."),line("First, I put on my earphones. Then, I walk around Ilwol Reservoir. After that, I sit on a bench and watch YouTube. Finally, I go back home.","이렇게 말하면 됩니다")));return}var exs=(D.x||[]).filter(function(x){return x.t15===t&&!x.qid});
+    var easy=S._hard!==true;var exBox=h("div",{hidden:true});
+    // the example follows the question heard above (user 2026-11-26 '질문이 바뀌면 밑 예시도 그 질문 것만'):
+    // a per-question example (X_q_*, keyed by qid) when there is one, else the topic examples as before
+    function setEx(q){clear(exBox);var x=q&&QX()[q.id];
+      if(x){exBox.append(h("div",{class:"muted",style:"margin-top:6px"},"위 질문에 맞춘 답입니다. 틀 문장 그대로이고, 색칠한 곳만 바꿨습니다."),fillCard(f,Object.assign({topic_ko:q.topic_ko},x)));return}
+      if(!exs.length)return;exBox.append(h("div",{class:"muted",style:"margin-top:6px"},"위 틀 문장 그대로이고, 색칠한 곳만 내 단어로 바꾼 것입니다."),(easy?(exs.filter(function(x){return x.mine}).length?exs.filter(function(x){return x.mine}):exs.slice(0,1)):exs).map(function(x){return fillCard(f,x)}))}
     // academy material (user has the academy's permission, 2026-11-26): keywords + strategy, textbook template,
     // completed answers and textbook questions, all inside the card, then the easy frame and fill-in examples
     var acad=academyDocs(t),aT=acad.filter(function(d){return /템플릿/.test(d.sec)})[0],aS=acad.filter(function(d){return /전략/.test(d.sec)})[0];
@@ -399,9 +406,12 @@ V.cram=function(){var quiz=!!S._cq;
     var acBox=aT?h("div",{hidden:true},mdBlock(aT.md)):null;
     // hear a real question of this type first, like Ava in the test (user 2026-11-26 '질문을 듣게 할 수 없나'):
     // textbook questions first when the academy pack is open, else our bank; text stays hidden until asked
-    var qBox=(function(){var pool=aq.length?academyQ().filter(function(x){return x.t15===t}):allQ().filter(function(x){return x.t15===t});if(!pool.length)return null;
+    // our bank only (each question has its own example); textbook questions stay in the academy box below
+    var qBox=(function(){var all=allQ("new").filter(function(x){return x.t15===t}),wx=all.filter(function(x){return QX()[x.id]});var pool=wx.length?wx:all;if(!pool.length){setEx(null);return null}
       var cur=null,txt=h("div",{class:"qtext",style:"font-size:15.5px",hidden:true}),tp=h("span",{class:"pill"}),showB;
-      function next(){var c=pool.filter(function(x){return x!==cur});cur=pick(c.length?c:pool);txt.textContent=cur.q;tp.textContent=cur.topic_ko||"";speak(cur.q,null,S.set.rate)}
+      function set(q){cur=q;txt.textContent=q.q;tp.textContent=q.topic_ko||"";setEx(q)}
+      function next(){var c=pool.filter(function(x){return x!==cur});set(pick(c.length?c:pool));speak(cur.q,null,S.set.rate)}
+      set(pick(pool));
       var b=function(l,fn){return h("button",{class:"btn ghost",style:"min-height:34px;padding:2px 10px",onclick:fn},l)};
       showB=b("글 보기",function(ev){if(!cur)next();txt.hidden=!txt.hidden;ev.currentTarget.textContent=txt.hidden?"글 보기":"글 숨기기"});
       return h("div",{style:"margin:2px 0 8px;padding:8px 10px;border-radius:10px;background:var(--soft,rgba(127,127,127,.08))"},
@@ -478,6 +488,7 @@ function practice(q,keep){if(!keep){remember();try{history.pushState({v:view,y:0
   M.append(qCard(q),panel,after);
   foot([h("button",{class:"btn",onclick:function(){go(view==="type"?"type":view)}},"다른 질문"),h("button",{class:"btn ghost",onclick:function(){clear(after);after.append(helpBlocks(q))}},"틀 · 모범 답변 보기")])}
 function helpBlocks(q){var box=h("div",{style:"display:flex;flex-direction:column;gap:12px"});var f=frameFor(q.t15);if(f)box.append(frameCard(f));
+  var qx=f&&QX()[q.id];if(qx)box.append(h("div",{class:"card"},h("h2",null,"이 질문 예시 답"),fillCard(f,Object.assign({topic_ko:q.topic_ko},qx))));
   academyDocs(q.t15).forEach(function(d){box.append(docCard(d))});modelsFor(q).slice(0,3).forEach(function(m){box.append(modelCard(m))});
   var mine=S.scripts[q.t15];if(mine)box.append(h("div",{class:"card"},h("h2",null,"내 스크립트"),h("div",{class:"ans"},mine)));return box}
 // 3 rounds
