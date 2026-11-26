@@ -96,7 +96,7 @@ svg.chart{width:100%;height:140px}
   <main id="main"></main>
 </div>
 <div class="foot" id="foot" hidden><div class="in" id="footIn"></div></div>
-<script src="data/opic_data.js?v=ef7e22b559"></script>
+<script src="data/opic_data.js?v=331b9b8f99"></script>
 <script>
 "use strict";
 (function(){
@@ -132,7 +132,7 @@ function topicKey(tk){var n=String(tk||"").replace(/\s|·/g,"");
 // ---------- state ----------
 var KEY="opic.v1";
 function load(){var s;try{s=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){s=null}s=s||{};
-  s.set=Object.assign({voice:"",rate:0.95,level:5,src:"mix",survey:SURVEY_DEF.slice(),liveSR:true,showText:false,whisper:"Xenova/whisper-tiny.en"},s.set||{});
+  s.set=Object.assign({voice:"",rate:0.95,level:5,goal:"IM3-IH",src:"mix",survey:SURVEY_DEF.slice(),liveSR:true,showText:false,whisper:"Xenova/whisper-tiny.en"},s.set||{});
   if(!s.set.bs)s.set.bs=bsDefault();s.set.survey=bsTopics(s.set.bs);
   s.scripts=s.scripts||{};s.known=s.known||{};s.log=s.log||{};s.seen=s.seen||{};return s}
 var S=load();
@@ -272,7 +272,7 @@ function buildExam(level,src){var pool=allQ(src),picks=S.set.survey.length?S.set
   out=out.concat(want()==="academy"&&arp.length===3?arp:rp.length?pick(rp):arp);
   if(level>=5){var adv=setsOf(pool,"advanced");var aadv=[14,15].map(function(t){var c=pool.filter(function(x){return x.src==="academy"&&x.t15===t});return c.length?pick(c):null}).filter(Boolean);
     out=out.concat(want()==="academy"&&aadv.length===2?aadv:adv.length?pick(adv):aadv)}
-  else{var rp2=rp.filter(function(g){return out.indexOf(g[0])<0});var ava=pool.filter(function(x){return x.cat==="ask_ava"});out.push(rp2.length?pick(rp2)[2]:pick(pool.filter(function(x){return x.type==="describe"})));out.push(ava.length?pick(ava):pick(pool))}
+  else{var rp2=rp.filter(function(g){return out.indexOf(g[0])<0});var ava=pool.filter(function(x){return x.cat==="ask_ava"});out.push(rp2.length?pick(rp2)[Math.random()<0.5?0:1]:pick(pool.filter(function(x){return x.type==="describe"})));out.push(ava.length?pick(ava):pick(pool))}
   return out.filter(Boolean).slice(0,15)}
 // ---------- shared widgets ----------
 // survey picker card: summary line, and the textbook form when opened. back = view to redraw after a change
@@ -348,6 +348,19 @@ function go(v,opt){opt=opt||{};if(!opt.pop&&view!==v){remember();try{history.pus
 window.addEventListener("popstate",function(e){var st=e.state||{v:"cram",y:0};go(st.v||"cram",{pop:true,y:st.y||0})});
 var V={};
 // ---------- day-of cram sheet: order of 15 questions, one frame per type, all-purpose lines ----------
+// level and goal pickers (user 2026-11-27 '3 4 5 6 다 만들어', '목표별로도'). Sources and judgment notes:
+// 오픽사이트\00_작업기록.md 44, 01_조사\O3_난이도_공식근거_v1.md. Official OPIc does not publish the per-level
+// composition (시험관리규정 14조 4항); per-level rules below come from the academy textbook and reviews.
+var LEVELS=[3,4,5,6];
+// [key, label, textbook-recommended level, default answer, target length (my choice, no textbook number)]
+var GOALS=[["IL","IL",3,"short","문항마다 30초 이상, 약 40-60단어"],["IM1-2","IM1-2",4,"short","문항마다 45초-1분, 약 60-90단어"],
+  ["IM3-IH","IM3-IH",5,"long","문항마다 1분-1분 30초, 약 110-140단어"],["AL","AL",5,"long","문항마다 1분 30초-2분, 150단어 이상. AL 용 긴 답은 아직 없어 학원식 1분이 가장 깁니다"]];
+function goalOf(k){return GOALS.filter(function(g){return g[0]===k})[0]||GOALS[2]}
+var LEVEL_NOTE={3:"교재 권장: 목표 IL. 3 과 4 는 문항 구성이 같습니다(교재 · 후기). 둘의 차이는 근거를 찾지 못했습니다[판정보류].",
+  4:"교재 권장: 목표 IM1-2. 구성은 3 과 같습니다. 3 과의 차이는 근거를 찾지 못했습니다[판정보류].",
+  5:"교재 권장: 목표 IM3-IH · AL. 14 · 15 번이 비교 · 이슈이고, 에바에게 질문하기는 나오지 않습니다(교재). 서베이 · 돌발 콤보의 순서는 무작위입니다(교재).",
+  6:"구성은 5 와 같습니다(교재 · 후기). 다른 점: 질문이 길고 복잡해질 수 있습니다(교재 FAQ). 재조정 '어려운 질문' 의 수준 차이는 근거를 찾지 못했습니다[판정보류]. 교재는 AL 도 5 로 충분하다고 합니다."};
+function lvHigh(){return (S.set.level||5)>=5}
 var FLOW=[
  ["1","자기소개",[0],"Tell me a little bit about yourself","현재","30-40초"],
  ["2-4","서베이 콤보 ①: 묘사 → 습관 · 준비물 → 경험",[1,3,4,5,6,7,2,8,9],"What does it look like? / What do you usually do? / the last time · first · memorable","현재 → 현재 → 과거","각 1분-1분 30초"],
@@ -356,9 +369,12 @@ var FLOW=[
  ["8-10","돌발 콤보: 서베이에 없는 주제",[1,3,5,6,2,9],"은행 · 호텔 · 재활용 · 날씨 · 휴대폰 · 교통 등","현재 → 현재 → 과거","각 1분"],
  ["11","롤플레이: 질문하기",[11],"I'd like to give you a situation... ask three or four questions","현재 · 의문문","1분"],
  ["12","롤플레이: 문제 해결 · 대안",[12],"There is a problem... offer two or three alternatives","현재완료 · 제안","1분-1분 30초"],
- ["13","롤플레이: 비슷한 경험",[13],"Have you ever had a similar experience?","과거","1분-1분 30초"],
- ["14","비교 · 변화 (난이도 5-6)",[14],"compared to the past / How has it changed?","과거 ↔ 현재","1분-1분 30초"],
- ["15","이슈 · 의견 (난이도 5-6) · 3-4 는 에바에게 질문",[15,10],"issue · concern · problem / Ask Ava three or four questions","현재 · 의견","1분"]];
+ ["13","롤플레이: 비슷한 경험",[13],"Have you ever had a similar experience?","과거","1분-1분 30초"]];
+var FLOW_TAIL={low:[["14","롤플레이 하나 더(질문하기 또는 문제 해결)",[11,12],"I'd like to give you a situation... / There is a problem...","현재 · 의문문","1분"],
+   ["15","에바에게 질문하기",[10],"Ask me three or four questions about ___","의문문","1분"]],
+  high:[["14","과거와 현재 비교",[14],"compared to the past / How has it changed?","과거 ↔ 현재","1분-1분 30초"],
+   ["15","이슈 · 의견",[15],"issue · concern · problem / What do you think?","현재 · 의견","1분"]]};
+function flowRows(){return FLOW.concat(FLOW_TAIL[lvHigh()?"high":"low"])}
 var DAYLIST=["첫 시험: 난이도 3(자신 있으면 4)을 고르고, 7번 뒤 재조정은 '비슷한 질문'. 14 · 15번이 롤플레이 · 에바에게 질문으로 나와 쉬워진다. IM3 이상을 노릴 때만 5.","서베이는 공부한 그대로 고른다(혼자 사는 집 · 영화 · 공연 · 공원 · 해변 · 카페 · 음악 · 조깅 · 걷기 · 집휴가 · 국내 · 해외여행).","질문은 매번 두 번 듣는다. 다시 듣기는 질문이 끝나고 약 5초 안에만 된다.","첫 번째에 '누구에게 · 전화인지 · 시제 신호', 두 번째에 '묻는 것이 몇 개인지' 를 잡는다.","문항마다 1분에서 2분. 7번을 마칠 때 18분 안쪽이면 시간이 넉넉하다.","한 문항도 넘기지 않는다. 모르면 Honestly, I've never thought about it, but... 으로 받고 내 경험 하나로 돌린다.","과거 질문은 끝까지 과거형. 틀리면 I mean, 으로 바로 고친다.","3초 넘게 조용히 있지 않는다. 막히면 Well, / Let me see. / Actually, 를 돌려 쓴다.","외운 문장을 그대로 읽는 티를 내지 않는다. 틀 문장에 오늘 생각나는 내 이야기를 끼운다."];
 // a frame with its ___ blanks filled by one example (X_fill.json); filled words are highlighted
 function fillLine(en,st,g){var p=en.split(" / ").map(function(s){return s.trim()});var s=p[st.alt]||p[0];
@@ -380,7 +396,16 @@ function fillCard(f,x){var lines=f.steps.map(function(s,i){return fillLine(s.en,
   return h("div",{class:"ans",style:"margin-top:8px"},h("div",{class:"row",style:"justify-content:space-between;margin-bottom:4px"},h("span",{class:"pill acc"},x.topic_ko),h("button",{class:"btn ghost",style:"min-height:36px;padding:4px 10px",onclick:function(){speak(all)}},"▶ 전체 듣기")),
     lines.map(function(l){return h("div",{style:"margin:3px 0"},l.node)}))}
 var CRAM_CATS=["시작 · 시간 벌기","되묻기 · 정정","연결어","시간 · 순서","과거 경험","감정 · 소감","묘사","비교 · 변화","의견 · 이슈","롤플레이 질문","롤플레이 문제 해결","마무리"];
-V.cram=function(){var quiz=!!S._cq;
+V.cram=function(){var quiz=!!S._cq,LV=S.set.level||5,G=goalOf(S.set.goal);
+  // level and goal pickers: one line each at the very top, explanation folded (user: 복잡해 보이면 안 됨)
+  var why=h("div",{hidden:true,class:"muted",style:"margin-top:6px;font-size:14px"},
+    h("div",null,"난이도: "+LEVEL_NOTE[LV]),
+    h("div",{style:"margin-top:4px"},"목표 "+G[1]+": 기본 답은 "+(G[3]==="long"?"학원식 1분":"짧게 30초")+", 목표 길이는 "+G[4]+". 길이는 교재에 수치가 없어 정한 값입니다."),
+    h("div",{style:"margin-top:4px"},"근거: 시험은 12-15 문항, 1차 약 7 문항 뒤 난이도 재조정(쉬운 · 비슷한 · 어려운) (opic.co.kr 진행 절차). 난이도별 문항 구성은 공식으로 공개하지 않아(OPIc 시험관리규정 14조 4항) 학원 교재와 후기를 따랐습니다. 목표별 권장 난이도는 교재 표입니다."));
+  M.append(h("div",{class:"card"},
+    h("div",{class:"row",style:"align-items:center;gap:6px;flex-wrap:nowrap"},h("b",{style:"min-width:42px"},"난이도"),h("div",{class:"seg",style:"flex:1"},LEVELS.map(function(n){return h("button",{"aria-pressed":LV===n?"true":"false",onclick:function(){S.set.level=n;save();go("cram",{y:window.scrollY})}},String(n))}))),
+    h("div",{class:"row",style:"align-items:center;gap:6px;flex-wrap:nowrap;margin-top:6px"},h("b",{style:"min-width:42px"},"목표"),h("div",{class:"seg",style:"flex:1"},GOALS.map(function(g){return h("button",{"aria-pressed":G[0]===g[0]?"true":"false",onclick:function(){S.set.goal=g[0];S.set.ans=g[3];save();go("cram",{y:window.scrollY})}},g[1])}))),
+    h("div",{class:"row",style:"justify-content:space-between;align-items:center;margin-top:6px"},h("span",{class:"muted",style:"font-size:14px"},"교재 권장 난이도: 목표 "+G[1]+" 는 "+G[2]+(G[2]!==LV?" (지금 "+LV+")":"")),h("button",{class:"btn ghost",style:"min-height:34px;padding:2px 10px",onclick:function(){why.hidden=!why.hidden}},"설명")),why));
   // alternatives "A / B / C" (past, month, year, in person) go on their own smaller lines so the main line stays short
   function line(en,ko){var ps=en.split(" / ");var e=h("div",{class:"qtext",style:"font-size:16.5px",hidden:quiz},ps[0],ps.slice(1).map(function(p){return h("div",{class:"muted",style:"font-size:14.5px;margin-top:2px"},"또는 "+p)}));var row=h("div",{style:"padding:6px 0;border-top:1px solid var(--line)",onclick:function(){if(e.hidden){e.hidden=false}speak(en.replace(/_{2,}/g,"something").replace(/\s\/\s/g,". "))}},ko?h("div",{class:"muted"},ko):null,e);return row}
   M.append(h("div",{class:"card"},h("h2",null,"오픽 당일 보기"),h("p",{class:"muted"},"시험장 가기 전에 위에서부터 훑으세요. 문장을 누르면 소리로 읽어 줍니다. '외우기 모드' 를 켜면 영어가 가려지고, 한국어를 보고 먼저 말한 뒤 눌러 확인합니다."),
@@ -408,7 +433,8 @@ V.cram=function(){var quiz=!!S._cq;
       h("div",{class:"ans",style:"margin-top:6px",onclick:function(){speak(g[3],null,0.85)}},h("span",{class:"pill acc"},"그대로 말하기(누르면 천천히 읽어 줌)"),h("div",{style:"margin-top:4px"},g[3])))}),
     h("h3",null,"빈칸에 넣을 단어 보따리"),BAG.map(function(b){return h("div",{style:"padding:5px 0;border-top:1px solid var(--line)"},h("b",null,b[0]+": "),h("span",{class:"qtext",style:"font-size:15.5px"},b[1]),h("div",{class:"muted"},b[2]))})));
   // 1. checklist
-  M.append(h("div",{class:"card"},h("h2",null,"1. 시험장 체크리스트"),DAYLIST.map(function(t,i){return h("div",{style:"padding:5px 0;border-top:1px solid var(--line)"},(i+1)+". "+t)})));
+  var day=DAYLIST.slice();day[0]="난이도는 위에서 고른 "+LV+"(목표 "+G[1]+" 의 교재 권장은 "+G[2]+"). 7번 뒤 재조정은 '비슷한 질문'. "+(LV>=5?"14 · 15번은 비교 · 이슈로 나온다.":"14 · 15번은 롤플레이 · 에바에게 질문으로 나온다.");
+  M.append(h("div",{class:"card"},h("h2",null,"1. 시험장 체크리스트"),day.map(function(t,i){return h("div",{style:"padding:5px 0;border-top:1px solid var(--line)"},(i+1)+". "+t)})));
   // 1-2. grade table (ACTFL 2024 guidelines; IM1-3 split is the Korean operator's, no public criteria found)
   var GR=[["AL","Advanced Low","과거 · 현재 · 미래를 섞어 문단으로 이야기하고, 예상 못 한 상황도 풀어 설명함","대기업 우대 수준"],
     ["IH","Intermediate High","대부분 문단 수준으로 이어 말하고 시제를 거의 지킴. 어려운 질문에서 가끔 무너짐","대부분 회사 기준을 넉넉히 넘음"],
@@ -426,25 +452,26 @@ V.cram=function(){var quiz=!!S._cq;
     ["문장을 and, so, because, then 으로 이어서 1분 넘게 말한다.","과거 질문은 과거형으로 끝까지 말한다.","롤플레이 11 · 12번을 비우지 않는다(질문 3개, 대안 2개)."].map(function(t){return h("div",{style:"padding:4px 0;border-top:1px solid var(--line)"},"• "+t)}),
     h("p",{class:"muted",style:"margin-top:8px"},"근거: ACTFL Proficiency Guidelines 2024(NH 15쪽, IL · IM 17-18쪽). IM1 · IM2 · IM3 를 나누는 공식 기준은 공개된 것이 없어, IM 안의 구분은 학원 · 후기 설명을 바탕으로 쉽게 풀어 쓴 것입니다.")));
   // 2. my exam plan (difficulty 3; user 2026-11-26)
-  var PLAN=[["1","자기소개","내 이야기: 대학원생 · 산책 · 일월저수지",[0]],
+  var PLAN_HEAD=[["1","자기소개","내 이야기: 대학원생 · 산책 · 일월저수지",[0]],
     ["2-4","서베이 주제 1: 묘사 → 습관 → 경험","산책 · 일월저수지 (습관은 First · Then · After that 만 붙이기)",[5,1,2]],
     ["5-7","서베이 주제 2: 묘사 → 습관 → 경험","음악(J-pop) · 영화(스파이더맨 · 애니) · 카페(학교 안) 중 나온 것",[1,8,2]],
     ["(7 뒤)","난이도 재조정","'비슷한 질문' 고르기",[]],
     ["8-10","돌발 주제: 묘사 → 습관 → 경험","휴대폰(S24 울트라) · 이어폰(버즈 라이브), 모르면 완주 공식",[3,9]],
     ["11","롤플레이: 질문 3-4개","Hi, I'm calling about ___. 로 시작",[11]],
     ["12","롤플레이: 문제 해결 · 대안 2개","I'm really sorry, but ___. How about ___?",[12]],
-    ["13","롤플레이: 비슷한 경험","과거형으로 짧게: 이탈리아 · 콘서트 등",[13]],
-    ["14","롤플레이(난이도 3)","롤플레이 완주 공식 그대로",[11,12]],
-    ["15","에바에게 질문하기(난이도 3)","Oh, you like ___ too? 로 시작해 질문 3개",[10]]];
-  M.append(h("div",{class:"card",style:"border:2px solid var(--navy)"},h("h2",null,"2. 내 시험 순서 (난이도 3)"),h("table",{class:"m"},h("tr",null,h("th",null,"번호"),h("th",null,"나오는 것"),h("th",null,"내가 쓸 이야기")),
+    ["13","롤플레이: 비슷한 경험","과거형으로 짧게: 이탈리아 · 일본 지갑 등",[13]]];
+  var PLAN=PLAN_HEAD.concat(LV>=5?[["14","과거와 현재 비교","In the past ___, but now ___. 동네 · 휴대폰 · 은행",[14]],["15","이슈 · 의견","One big issue is ___. I think ___. 내 경험 하나 붙이기",[15]]]
+    :[["14","롤플레이 하나 더","롤플레이 완주 공식 그대로",[11,12]],["15","에바에게 질문하기","Oh, you like ___ too? 로 시작해 질문 3개",[10]]]);
+  if(LV>=5)PLAN[1]=["2-4","주제 1(서베이 또는 돌발): 묘사 → 습관 → 경험","산책 · 일월저수지, 돌발이면 완주 공식",[5,1,2]];
+  M.append(h("div",{class:"card",style:"border:2px solid var(--navy)"},h("h2",null,"2. 내 시험 순서 (난이도 "+LV+")"),h("p",{class:"muted",style:"margin:0 0 6px"},LEVEL_NOTE[LV]),h("table",{class:"m"},h("tr",null,h("th",null,"번호"),h("th",null,"나오는 것"),h("th",null,"내가 쓸 이야기")),
     PLAN.map(function(r){return h("tr",null,h("td",{style:"white-space:nowrap"},h("b",null,r[0])),h("td",null,r[1],r[3].length?h("div",{class:"chips",style:"margin-top:4px"},r[3].map(function(t){return h("a",{class:"pill navy",href:"#t"+t,style:"text-decoration:none"},T15N[t])})):null),h("td",null,r[2]))}))));
   // 2-2. generic flow with listening signals (collapsed in easy mode)
   var flowBox=h("div",{hidden:S._hard!==true},h("table",{class:"m"},h("tr",null,h("th",null,"번호"),h("th",null,"나오는 것"),h("th",null,"알아듣는 신호 · 시제")),
-    FLOW.map(function(r){return h("tr",null,h("td",{style:"white-space:nowrap"},h("b",null,r[0])),h("td",null,r[1],r[5]?h("div",{class:"muted"},r[5]):null,r[2].length?h("div",{class:"chips",style:"margin-top:4px"},r[2].map(function(t){return h("a",{class:"pill navy",href:"#t"+t,style:"text-decoration:none"},T15N[t])})):null),h("td",{class:"muted"},r[3],r[4]?h("div",null,"시제: "+r[4]):null))})));
-  M.append(h("div",{class:"card"},h("div",{class:"row",style:"justify-content:space-between"},h("h2",{style:"margin:0"},"2-2. 알아듣는 신호(일반 순서)"),S._hard!==true?h("button",{class:"btn ghost",onclick:function(){flowBox.hidden=!flowBox.hidden}},"펼치기"):null),flowBox));
+    flowRows().map(function(r){return h("tr",null,h("td",{style:"white-space:nowrap"},h("b",null,r[0])),h("td",null,r[1],r[5]?h("div",{class:"muted"},r[5]):null,r[2].length?h("div",{class:"chips",style:"margin-top:4px"},r[2].map(function(t){return h("a",{class:"pill navy",href:"#t"+t,style:"text-decoration:none"},T15N[t])})):null),h("td",{class:"muted"},r[3],r[4]?h("div",null,"시제: "+r[4]):null))})));
+  M.append(h("div",{class:"card"},h("div",{class:"row",style:"justify-content:space-between"},h("h2",{style:"margin:0"},"2-2. 알아듣는 신호(난이도 "+LV+")"),S._hard!==true?h("button",{class:"btn ghost",onclick:function(){flowBox.hidden=!flowBox.hidden}},"펼치기"):null),flowBox));
   // 3. one frame per type, in the order the exam asks them
-  M.append(h("div",{class:"card",id:"types"},h("h2",null,"3. 시험 순서대로 외울 틀 (빈칸에 내 단어만)"),h("p",{class:"muted"},"자기소개 → 묘사 → 경험 → 롤플레이 → 에바에게 질문 순입니다. 맨 끝 14 · 15(비교 · 이슈)는 난이도 5 용이라 이번에는 건너뛰어도 됩니다.")));
-  var order=[0,5,1,3,4,2,9,8,7,6,11,12,13,10,14,15];
+  M.append(h("div",{class:"card",id:"types"},h("h2",null,"3. 시험 순서대로 외울 틀 (빈칸에 내 단어만)"),h("p",{class:"muted"},LV>=5?"자기소개 → 묘사 → 경험 → 롤플레이 → 비교 · 이슈 순입니다. 난이도 "+LV+" 에는 에바에게 질문하기(10)가 나오지 않아 뺐습니다(교재).":"자기소개 → 묘사 → 경험 → 롤플레이 → 에바에게 질문 순입니다. 난이도 "+LV+" 에는 이슈(15)가 나오지 않아 뺐습니다(교재).")));
+  var order=LV>=5?[0,5,1,3,4,2,9,8,7,6,11,12,13,14,15]:[0,5,1,3,4,2,9,8,7,6,11,12,13,10,14];
   order.forEach(function(t){var f=frameFor(t);if(!f)return;
     if(t===6&&S._hard!==true){M.append(h("div",{class:"card",id:"t6"},h("h2",null,"6. 시간순서(넘어감)"),h("p",{class:"muted"},"따로 외우지 않습니다. 루틴 질문이 나오면 1번 활동묘사 답에 순서 말만 붙이세요: First, Then, After that, Finally."),line("First, I put on my earphones. Then, I walk around Ilwol Reservoir. After that, I sit on a bench and watch YouTube. Finally, I go back home.","이렇게 말하면 됩니다")));return}var exs=(D.x||[]).filter(function(x){return x.t15===t&&!x.qid});
     var easy=S._hard!==true;var exBox=h("div",{hidden:true});
