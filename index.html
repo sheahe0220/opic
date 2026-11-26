@@ -96,7 +96,7 @@ svg.chart{width:100%;height:140px}
   <main id="main"></main>
 </div>
 <div class="foot" id="foot" hidden><div class="in" id="footIn"></div></div>
-<script src="data/opic_data.js?v=3f7262a119"></script>
+<script src="data/opic_data.js?v=2fc12c6fb7"></script>
 <script>
 "use strict";
 (function(){
@@ -313,7 +313,7 @@ var CRAM_CATS=["시작 · 시간 벌기","되묻기 · 정정","연결어","시�
 V.cram=function(){var quiz=!!S._cq;
   function line(en,ko){var e=h("div",{class:"qtext",style:"font-size:16.5px",hidden:quiz},en);var row=h("div",{style:"padding:6px 0;border-top:1px solid var(--line)",onclick:function(){if(e.hidden){e.hidden=false}speak(en.replace(/_{2,}/g,"something").replace(/\s\/\s/g,". "))}},ko?h("div",{class:"muted"},ko):null,e);return row}
   M.append(h("div",{class:"card"},h("h2",null,"오픽 당일 보기"),h("p",{class:"muted"},"시험장 가기 전에 위에서부터 훑으세요. 문장을 누르면 소리로 읽어 줍니다. '외우기 모드' 를 켜면 영어가 가려지고, 한국어를 보고 먼저 말한 뒤 눌러 확인합니다."),
-    h("div",{class:"row"},h("button",{class:"btn "+(quiz?"primary":""),onclick:function(){S._cq=!quiz;go("cram")}},quiz?"외우기 모드 끄기":"외우기 모드 켜기"),h("a",{class:"btn ghost",href:"#types"},"유형별 틀로"),h("a",{class:"btn ghost",href:"#lines"},"만능 문장으로"))));
+    h("div",{class:"seg",style:"margin-bottom:8px"},h("button",{"aria-pressed":S._hard!==true?"true":"false",onclick:function(){S._hard=false;go("cram")}},"쉬운 보기(첫 시험)"),h("button",{"aria-pressed":S._hard===true?"true":"false",onclick:function(){S._hard=true;go("cram")}},"학원 자료까지 전부")),h("div",{class:"row"},h("button",{class:"btn "+(quiz?"primary":""),onclick:function(){S._cq=!quiz;go("cram")}},quiz?"외우기 모드 끄기":"외우기 모드 켜기"),h("a",{class:"btn ghost",href:"#types"},"유형별 틀로"),h("a",{class:"btn ghost",href:"#lines"},"만능 문장으로"))));
   // 1. checklist
   M.append(h("div",{class:"card"},h("h2",null,"1. 시험장 체크리스트"),DAYLIST.map(function(t,i){return h("div",{style:"padding:5px 0;border-top:1px solid var(--line)"},(i+1)+". "+t)})));
   // 2. flow table
@@ -323,7 +323,7 @@ V.cram=function(){var quiz=!!S._cq;
   M.append(h("div",{class:"card",id:"types"},h("h2",null,"3. 유형별 외울 틀 (빈칸에 내 단어만 바꿔 넣기)"),h("p",{class:"muted"},"번호는 학원 15유형 번호입니다. 각 줄이 말하는 순서이고, ___ 자리에 오늘 쓸 단어를 넣습니다.")));
   var order=[0,1,5,3,4,6,7,2,8,9,11,12,13,14,15,10];
   order.forEach(function(t){var f=frameFor(t);if(!f)return;var exs=(D.x||[]).filter(function(x){return x.t15===t});
-    var exBox=exs.length?h("div",{hidden:true},h("div",{class:"muted",style:"margin-top:6px"},"위 틀 문장 그대로이고, 색칠한 곳만 내 단어로 바꾼 것입니다."),exs.map(function(x){return fillCard(f,x)})):null;
+    var easy=S._hard!==true;var exBox=exs.length?h("div",{hidden:!easy},h("div",{class:"muted",style:"margin-top:6px"},"위 틀 문장 그대로이고, 색칠한 곳만 내 단어로 바꾼 것입니다."),(easy?exs.slice(0,1):exs).map(function(x){return fillCard(f,x)})):null;
     // academy material (user has the academy's permission, 2026-11-26): keywords + strategy, textbook template,
     // completed answers and textbook questions, all inside the card, then the easy frame and fill-in examples
     var acad=academyDocs(t),aT=acad.filter(function(d){return /템플릿/.test(d.sec)})[0],aS=acad.filter(function(d){return /전략/.test(d.sec)})[0];
@@ -332,7 +332,7 @@ V.cram=function(){var quiz=!!S._cq;
     var strat=aS?codeBlocks(aS.md):[];
     var aq=academyQ().filter(function(x){return x.t15===t}).slice(0,3);
     function sp(txt){return h("button",{class:"btn ghost",style:"min-height:34px;padding:2px 10px",onclick:function(){speak(txt.replace(/\[[^\]]*\]/g,"something").replace(/\([^)]*\)/g," ").replace(/[가-힣]+/g," "))}},"▶ 듣기")}
-    var acadBox=(strat.length||tplTxt||answers.length||aq.length)?h("div",{style:"margin:6px 0 10px;border-left:3px solid var(--accent);padding-left:10px"},
+    var acadBox=(strat.length||tplTxt||answers.length||aq.length)?h("div",{hidden:easy,style:"margin:6px 0 10px;border-left:3px solid var(--accent);padding-left:10px"},
       strat.length?h("div",null,h("span",{class:"pill acc"},"학원 키워드 · 공략법"),strat.map(function(b){return h("pre",{class:"doc"},b.trim())})):null,
       tplTxt?h("div",null,h("div",{class:"row"},h("span",{class:"pill acc"},"학원 템플릿"),sp(tplTxt)),h("pre",{class:"doc"},tplTxt)):null,
       answers.length?h("div",null,h("span",{class:"pill acc"},"학원 완성 답변"),answers.map(function(b){return h("div",null,h("pre",{class:"doc"},b.trim()),sp(b))})):null,
@@ -340,14 +340,15 @@ V.cram=function(){var quiz=!!S._cq;
     var acBox=aT?h("div",{hidden:true},mdBlock(aT.md)):null;
     M.append(h("div",{class:"card",id:"t"+t},h("div",{class:"row",style:"justify-content:space-between"},h("h2",{style:"margin:0"},t+". "+f.name_ko),h("span",{class:"pill acc"},T15TYPE[t])),
       h("div",{class:"muted",style:"margin:4px 0 6px"},"이럴 때: "+f.when),acadBox,
-      h("span",{class:"pill navy"},acadBox?"쉬운 틀 (위와 같은 순서, 짧은 문장)":"외울 틀"),
+      h("span",{class:"pill navy"},easy?"외울 틀 (빈칸에 내 단어만)":acadBox?"쉬운 틀 (위와 같은 순서, 짧은 문장)":"외울 틀"),
       f.steps.map(function(s){return line(s.en,s.ko)}),
       f.tips&&f.tips.length?h("div",{class:"muted",style:"margin-top:6px"},"요령: "+f.tips[0]):null,
-      h("div",{class:"row",style:"margin-top:6px"},exBox?h("button",{class:"btn ghost",onclick:function(){exBox.hidden=!exBox.hidden}},"예시 답 보기"):null,acBox?h("button",{class:"btn ghost",onclick:function(){acBox.hidden=!acBox.hidden}},"학원 자료 전체"):null,
+      h("div",{class:"row",style:"margin-top:6px"},exBox?h("button",{class:"btn ghost",onclick:function(){exBox.hidden=!exBox.hidden}},"예시 답 보기"):null,acadBox&&easy?h("button",{class:"btn ghost",onclick:function(){acadBox.hidden=!acadBox.hidden}},"학원 자료 펼치기"):null,acBox&&!easy?h("button",{class:"btn ghost",onclick:function(){acBox.hidden=!acBox.hidden}},"학원 자료 전체"):null,
         h("button",{class:"btn ghost",onclick:function(){var pool=allQ().filter(function(x){return x.t15===t});if(pool.length)practice(pick(pool))}},"이 유형 한 번 말해 보기")),exBox,acBox))});
   // 4. all-purpose lines (academy common expressions first, then our cards)
   var lines=h("div",{class:"card",id:"lines"},h("h2",null,"4. 어디서나 쓰는 만능 문장"));
-  if(ACAD){ACAD.docs.filter(function(d){return /공통 표현/.test(d.title)}).forEach(function(d){lines.append(h("h3",null,"학원 교재: 모든 유형 공통 표현(위기 대처 · 필러 등)"),mdBlock(d.md))})}
+  if(ACAD){ACAD.docs.filter(function(d){return /공통 표현/.test(d.title)}).forEach(function(d){var box=h("div",{hidden:S._hard!==true},mdBlock(d.md));
+    lines.append(h("h3",null,"학원 교재: 모든 유형 공통 표현(위기 대처 · 필러 등)"),S._hard!==true?h("button",{class:"btn ghost",onclick:function(){box.hidden=!box.hidden}},"펼치기"):null,box)})}
   CRAM_CATS.forEach(function(c){var list=D.e.filter(function(x){return x.cat===c}).slice(0,5);if(!list.length)return;lines.append(h("h3",null,c));list.forEach(function(x){lines.append(line(x.en,x.ko))})});
   M.append(lines);
   if(!ACAD)M.append(h("div",{class:"card muted"},"학원 템플릿도 같이 보려면 '학원 자료' 탭에서 암호를 한 번 넣으세요."));
