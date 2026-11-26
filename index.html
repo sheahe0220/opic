@@ -96,7 +96,7 @@ svg.chart{width:100%;height:140px}
   <main id="main"></main>
 </div>
 <div class="foot" id="foot" hidden><div class="in" id="footIn"></div></div>
-<script src="data/opic_data.js?v=f5c452175e"></script>
+<script src="data/opic_data.js?v=ad3fe5e422"></script>
 <script>
 "use strict";
 (function(){
@@ -242,11 +242,25 @@ function whisper(blob,onStatus){return (async function(){
 // ---------- academy pack (encrypted) ----------
 var ACAD=null;
 function b64(s){var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
-function unlock(pw){return fetch("data/academy.enc.json",{cache:"no-cache"}).then(function(r){if(!r.ok)throw new Error("학원 자료 파일이 아직 없습니다");return r.json()}).then(async function(enc){
+// encrypted packs (AES-GCM, key from PBKDF2-SHA256 of the passphrase): data/<name>.enc.json = {salt, iter, iv, ct}.
+// "academy" is opened at unlock. "al" and "ql" may be split out (coordinator plan 2026-11-27, pack script v5) and are
+// then fetched only when first needed; while they are still inside "academy" nothing extra is fetched.
+var PW=null,PACK_WAIT={};
+function unlockPack(name,pw){return fetch("data/"+name+".enc.json",{cache:"no-cache"}).then(function(r){if(!r.ok){var e=new Error(name==="academy"?"학원 자료 파일이 아직 없습니다":"없음");e.missing=true;throw e}return r.json()}).then(async function(enc){
   var km=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
   var key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(enc.salt),iterations:enc.iter,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["decrypt"]);
   var pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(enc.iv)},key,b64(enc.ct)).catch(function(){throw new Error("암호가 맞지 않습니다")});
-  ACAD=JSON.parse(new TextDecoder().decode(pt));return ACAD})}
+  return JSON.parse(new TextDecoder().decode(pt))})}
+function unlock(pw){return unlockPack("academy",pw).then(function(o){PW=pw;ACAD=o;return ACAD})}
+// load a split pack once ("al" -> ACAD.al list, "ql" -> ACAD.ql object); a missing file means "not made yet":
+// al becomes [] and ql null, so the screens show their 'not yet' state. Resolves with the value.
+function needPack(name){if(!ACAD)return Promise.resolve(null);if(ACAD[name]!==undefined)return Promise.resolve(ACAD[name]);
+  if(PACK_WAIT[name])return PACK_WAIT[name];
+  var pw=PW;if(!pw){try{pw=localStorage.getItem("opic.pass")}catch(e){}}
+  PACK_WAIT[name]=unlockPack(name,pw||"").then(function(o){var v=name==="al"?(Array.isArray(o)?o:(o.al||[])):(o&&o.questions?o:(o.ql||null));ACAD[name]=v;return v})
+    .catch(function(e){ACAD[name]=name==="al"?[]:null;if(!e.missing)console.warn(name+" pack: "+e.message);return ACAD[name]})
+    .then(function(v){delete PACK_WAIT[name];return v});
+  return PACK_WAIT[name]}
 function autoUnlock(){var pw=null;try{pw=localStorage.getItem("opic.pass")}catch(e){}if(pw)return unlock(pw).catch(function(){ACAD=null});return Promise.resolve()}
 function academyQ(){if(!ACAD)return[];return ACAD.questions.map(function(x){var t=x.t15;return{id:x.id,set:null,topic:x.topic_ko,topic_ko:x.topic_ko,cat:T15CAT[t]||"survey",type:T15TYPE[t]||"describe",t15:t,slot:1,lv:[3,4,5,6],q:x.q,ko:"",cue:"",src:"academy"}})}
 function allQ(src){src=src||S.set.src;var nq=D.q.map(function(x){return Object.assign({src:"new"},x)}),aq=academyQ();return src==="new"?nq:src==="academy"?(aq.length?aq:nq):nq.concat(aq)}
@@ -383,7 +397,7 @@ function fillLine(en,st,g){var p=en.split(" / ").map(function(s){return s.trim()
 // academy-style 1-minute answers (encrypted pack "long", user 2026-11-26 '학원 것과 퓨전'): qid -> answer
 function LX(){if(!ACAD)return{};if(LX._a!==ACAD){LX._m={};LX._a=ACAD;(ACAD.long||[]).forEach(function(x){LX._m[x.qid]=x})}return LX._m}
 // AL-level 2-minute answers (pack "al", 160-220 words; may be empty while being written): qid -> answer
-function LXA(){if(!ACAD)return{};if(LXA._a!==ACAD){LXA._m={};LXA._a=ACAD;(ACAD.al||[]).forEach(function(x){LXA._m[x.qid]=x})}return LXA._m}
+function LXA(){if(!ACAD||!ACAD.al)return{};if(LXA._a!==ACAD.al){LXA._m={};LXA._a=ACAD.al;ACAD.al.forEach(function(x){LXA._m[x.qid]=x})}return LXA._m}
 var ANS_LABEL={short:"짧게 30초",long:"학원식 1분",al:"AL 2분"};
 // [slot] words are marked; in quiz mode the English hides until tapped (Korean first, say it, then check)
 function longCard(x,quiz,label){var MK="background:var(--accent-soft);color:inherit;border-radius:4px;padding:0 3px;font-weight:700";
@@ -483,6 +497,9 @@ V.cram=function(){var quiz=!!S._cq,LV=S.set.level||5,G=goalOf(S.set.goal);
     // two answers per question: short 5-line frame (30 s) or academy-style (1 min); the choice is kept
     function setEx(q){clear(exBox);var x=q&&QX()[q.id],L=q&&LX()[q.id],A=q&&LXA()[q.id],mode=S.set.ans||(ACAD?"long":"short");
       exBox.append(h("div",{class:"seg",style:"margin-top:6px"},["short","long","al"].map(function(k){return h("button",{"aria-pressed":mode===k?"true":"false",onclick:function(){S.set.ans=k;save();setEx(q)}},ANS_LABEL[k])})));
+      setEx._q=q;
+      // the AL pack is fetched only when the answer box is open (not while the card is folded)
+      if(mode==="al"&&ACAD&&ACAD.al===undefined){exBox.append(h("p",{class:"muted",style:"margin-top:6px"},"AL 답을 받는 중입니다..."));if(!exBox.hidden)needPack("al").then(function(){setEx(q)});return}
       if(mode==="al"&&A){exBox.append(longCard(A,quiz,"AL 2분"));return}
       if(mode==="al"){exBox.append(h("p",{class:"muted",style:"margin-top:6px"},ACAD?"이 질문은 AL 답이 아직 없어 "+(L?"학원식 1분":"짧은 답")+"을 보여 줍니다.":"'학원 자료' 탭에서 암호를 넣으면 AL · 학원식 답이 보입니다. 지금은 짧은 답입니다."));if(L){exBox.append(longCard(L,quiz));return}}
       if(mode==="long"&&L){exBox.append(longCard(L,quiz));return}
@@ -521,7 +538,7 @@ V.cram=function(){var quiz=!!S._cq,LV=S.set.level||5,G=goalOf(S.set.goal);
     M.append(h("div",{class:"card",id:"t"+t},h("div",{class:"row",style:"justify-content:space-between"},h("h2",{style:"margin:0"},t+". "+f.name_ko),h("span",{class:"pill acc"},T15TYPE[t])),
       h("div",{class:"muted",style:"margin:4px 0 6px"},"이럴 때: "+f.when),qBox,
       // the answer to the question above sits right under it (question -> answer -> frame)
-      h("button",{class:"btn ghost",style:"margin:2px 0 4px",onclick:function(ev){exBox.hidden=!exBox.hidden;ev.currentTarget.textContent=exBox.hidden?"이 질문 답 보기":"답 접기"}},"이 질문 답 보기"),exBox,
+      h("button",{class:"btn ghost",style:"margin:2px 0 4px",onclick:function(ev){exBox.hidden=!exBox.hidden;ev.currentTarget.textContent=exBox.hidden?"이 질문 답 보기":"답 접기";if(!exBox.hidden&&ACAD&&ACAD.al===undefined&&S.set.ans==="al"&&setEx._q)setEx(setEx._q)}},"이 질문 답 보기"),exBox,
       easy?null:acadBox,
       h("span",{class:"pill navy"},easy?"외울 틀 (빈칸에 내 단어만)":acadBox?"쉬운 틀 (위와 같은 순서, 짧은 문장)":"외울 틀"),
       f.steps.map(function(s){return line(s.en,s.ko)}),
@@ -592,7 +609,8 @@ function practice(q,keep){if(!keep){remember();try{history.pushState({v:view,y:0
   M.append(qCard(q),panel,after);
   foot([h("button",{class:"btn",onclick:function(){go(view==="type"?"type":view)}},"다른 질문"),h("button",{class:"btn ghost",onclick:function(){clear(after);after.append(helpBlocks(q))}},"틀 · 모범 답변 보기")])}
 function helpBlocks(q){var box=h("div",{style:"display:flex;flex-direction:column;gap:12px"});var f=frameFor(q.t15);if(f)box.append(frameCard(f));
-  var la=LXA()[q.id];if(la)box.append(h("div",{class:"card"},h("h2",null,"이 질문 AL 답(2분)"),longCard(la,false,"AL 2분")));
+  var alSlot=h("div");box.append(alSlot);
+  needPack("al").then(function(){var la=LXA()[q.id];if(la)alSlot.append(h("div",{class:"card"},h("h2",null,"이 질문 AL 답(2분)"),longCard(la,false,"AL 2분")))});
   var lx=LX()[q.id];if(lx)box.append(h("div",{class:"card"},h("h2",null,"이 질문 학원식 답(1분)"),longCard(lx)));
   var qx=f&&QX()[q.id];if(qx)box.append(h("div",{class:"card"},h("h2",null,"이 질문 예시 답"),fillCard(f,Object.assign({topic_ko:q.topic_ko},qx))));
   academyDocs(q.t15).forEach(function(d){box.append(docCard(d))});modelsFor(q).slice(0,3).forEach(function(m){box.append(modelCard(m))});
@@ -645,7 +663,8 @@ V.listen=function(){var pool=qlPool();
   var sig=h("div",{hidden:!!S._qlSigClosed},h("table",{class:"m"},QL_SIG.map(function(r){return h("tr",null,h("td",{class:"qtext",style:"font-size:14.5px"},r[0]),h("td",{class:"muted",style:"font-size:14px"},r[1]))})),
     h("p",{class:"muted",style:"margin:6px 0 0"},"신호가 없고 usually · Describe · look like 만 들리면 현재형 묘사로 답합니다."));
   M.append(h("div",{class:"card"},h("div",{class:"row",style:"justify-content:space-between;align-items:center"},h("h2",{style:"margin:0"},"시험장 신호 8개"),h("button",{class:"btn ghost",style:"min-height:34px;padding:2px 10px",onclick:function(){sig.hidden=!sig.hidden;S._qlSigClosed=sig.hidden}},"접기 · 펼치기")),sig));
-  if(!pool.length){M.append(h("div",{class:"card"},h("p",{class:"muted"},"'학원 자료' 탭에서 암호를 넣으면 신호 표시가 붙은 알아듣기 드릴(질문 900여 개)이 열립니다. 지금은 유형만 고르는 연습입니다.")));V.listenOld();return}
+  if(ACAD&&ACAD.ql===undefined){M.append(h("div",{class:"card"},h("p",{class:"muted"},"알아듣기 연습 자료를 받는 중입니다...")));needPack("ql").then(function(){if(view==="listen")go("listen")});return}
+  if(!pool.length){M.append(h("div",{class:"card"},h("p",{class:"muted"},ACAD?"신호 표시가 붙은 알아듣기 연습 자료가 아직 없습니다. 지금은 유형만 고르는 연습입니다.":"'학원 자료' 탭에서 암호를 넣으면 신호 표시가 붙은 알아듣기 드릴(질문 900여 개)이 열립니다. 지금은 유형만 고르는 연습입니다.")));V.listenOld();return}
   var retry=S._qlRetry||[];var q=null;
   if(retry.length){var g=retry[0];var c=pool.filter(function(x){return qlGroup(x.t15)===g&&x.id!==S._qlLast});if(c.length)q=pick(c)}
   if(!q)q=pick(pool.filter(function(x){return x.id!==S._qlLast}));S._qlLast=q.id;
@@ -698,7 +717,7 @@ V.acad=function(){if(!ACAD){var inp=h("input",{type:"password",placeholder:"학�
   ACAD.docs.filter(function(d){return d.t15===sel}).forEach(function(d){M.append(docCard(d))});
   var qs=academyQ().filter(function(x){return x.t15===sel});M.append(h("div",{class:"card"},h("h2",null,"교재 질문 "+qs.length+"개"),qs.map(function(q){return h("div",{class:"recitem"},h("div",{class:"muted"},q.topic_ko),h("div",{class:"qtext",style:"font-size:16px"},q.q),h("div",{class:"row"},h("button",{class:"btn ghost",onclick:function(){speak(q.q)}},"▶ 듣기"),h("button",{class:"btn ghost",onclick:function(){practice(q)}},"연습")))})));
   var extra=ACAD.docs.filter(function(d){return d.t15==null});if(extra.length)M.append(h("div",{class:"card"},h("h2",null,"공통 · 발음 자료"),extra.map(docCard)));
-  foot([h("button",{class:"btn ghost",onclick:function(){try{localStorage.removeItem("opic.pass")}catch(e){}ACAD=null;go("acad")}},"이 기기에서 잠그기")])};
+  foot([h("button",{class:"btn ghost",onclick:function(){try{localStorage.removeItem("opic.pass")}catch(e){}ACAD=null;PW=null;go("acad")}},"이 기기에서 잠그기")])};
 // my scripts
 V.mine=function(){var sel=S._mt==null?1:S._mt;var seg=h("div",{class:"chips"});T15N.forEach(function(n,t){seg.append(h("button",{class:"chip","aria-pressed":sel===t?"true":"false",onclick:function(){S._mt=t;go("mine")}},t+". "+n+(S.scripts[t]?" ✓":"")))});
   var ta=h("textarea",{placeholder:"이 유형에 쓸 내 답변(영어)이나 키워드를 적어 두세요. 이 기기에만 저장됩니다."});ta.value=S.scripts[sel]||"";ta.addEventListener("input",function(){S.scripts[sel]=ta.value;save()});
