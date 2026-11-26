@@ -283,11 +283,52 @@ function resultBlock(r,q,a,rec){var url=URL.createObjectURL(r.blob);var tx=h("di
   var mt=metricTable(a),fb=fbBlock(a,q);
   return h("div",{class:"card"},h("h2",null,"점검"),h("audio",{controls:true,src:url}),h("div",{style:"height:8px"}),mt,h("div",{style:"height:8px"}),fb,h("h3",null,"받아쓰기"),tx,h("div",{class:"row"},wbtn))}
 // ---------- views ----------
-var VIEWS=[["home","오늘"],["exam","실전 모의고사"],["type","유형 연습"],["rep","3번 말하기"],["shadow","섀도잉"],["listen","질문 알아듣기"],["expr","표현"],["acad","학원 자료"],["mine","내 스크립트"],["box","녹음함"],["set","설정"]];
+var VIEWS=[["cram","당일 보기"],["home","오늘"],["exam","실전 모의고사"],["type","유형 연습"],["rep","3번 말하기"],["shadow","섀도잉"],["listen","질문 알아듣기"],["expr","표현"],["acad","학원 자료"],["mine","내 스크립트"],["box","녹음함"],["set","설정"]];
 var view="home",cleanup=null;
 var tabs=document.getElementById("tabs");VIEWS.forEach(function(v){tabs.append(h("button",{"data-v":v[0],onclick:function(){go(v[0])}},v[1]))});
 function go(v){if(cleanup){try{cleanup()}catch(e){}cleanup=null}stopSpeak();view=v;Array.prototype.forEach.call(tabs.children,function(b){b.setAttribute("aria-selected",b.dataset.v===v?"true":"false")});clear(M);foot(null);(V[v]||V.home)();window.scrollTo(0,0)}
 var V={};
+// ---------- day-of cram sheet: order of 15 questions, one frame per type, all-purpose lines ----------
+var FLOW=[
+ ["1","자기소개",[0],"Tell me a little bit about yourself","현재","30-40초"],
+ ["2-4","서베이 콤보 ①: 묘사 → 습관 · 준비물 → 경험",[1,3,4,5,6,7,2,8,9],"What does it look like? / What do you usually do? / the last time · first · memorable","현재 → 현재 → 과거","각 1분-1분 30초"],
+ ["5-7","서베이 콤보 ②: 같은 구성, 다른 주제",[1,3,4,5,6,7,2,8,9],"주제만 바뀜(영화 · 공원 · 카페 · 여행 등)","현재 → 현재 → 과거","각 1분-1분 30초"],
+ ["(7 뒤)","난이도 재조정",[],"쉬운 · 비슷한 · 어려운 중 '비슷한'","",""],
+ ["8-10","돌발 콤보: 서베이에 없는 주제",[1,3,5,6,2,9],"은행 · 호텔 · 재활용 · 날씨 · 휴대폰 · 교통 등","현재 → 현재 → 과거","각 1분"],
+ ["11","롤플레이: 질문하기",[11],"I'd like to give you a situation... ask three or four questions","현재 · 의문문","1분"],
+ ["12","롤플레이: 문제 해결 · 대안",[12],"There is a problem... offer two or three alternatives","현재완료 · 제안","1분-1분 30초"],
+ ["13","롤플레이: 비슷한 경험",[13],"Have you ever had a similar experience?","과거","1분-1분 30초"],
+ ["14","비교 · 변화 (난이도 5-6)",[14],"compared to the past / How has it changed?","과거 ↔ 현재","1분-1분 30초"],
+ ["15","이슈 · 의견 (난이도 5-6) · 3-4 는 에바에게 질문",[15,10],"issue · concern · problem / Ask Ava three or four questions","현재 · 의견","1분"]];
+var DAYLIST=["난이도 5 를 고르고, 7번 뒤 재조정은 '비슷한 질문'.","서베이는 공부한 그대로 고른다(혼자 사는 집 · 영화 · 공연 · 공원 · 해변 · 카페 · 음악 · 조깅 · 걷기 · 집휴가 · 국내 · 해외여행).","질문은 매번 두 번 듣는다. 다시 듣기는 질문이 끝나고 약 5초 안에만 된다.","첫 번째에 '누구에게 · 전화인지 · 시제 신호', 두 번째에 '묻는 것이 몇 개인지' 를 잡는다.","문항마다 1분에서 2분. 7번을 마칠 때 18분 안쪽이면 시간이 넉넉하다.","한 문항도 넘기지 않는다. 모르면 Honestly, I've never thought about it, but... 으로 받고 내 경험 하나로 돌린다.","과거 질문은 끝까지 과거형. 틀리면 I mean, 으로 바로 고친다.","3초 넘게 조용히 있지 않는다. 막히면 Well, / Let me see. / Actually, 를 돌려 쓴다.","외운 문장을 그대로 읽는 티를 내지 않는다. 틀 문장에 오늘 생각나는 내 이야기를 끼운다."];
+var CRAM_CATS=["시작 · 시간 벌기","되묻기 · 정정","연결어","시간 · 순서","과거 경험","감정 · 소감","묘사","비교 · 변화","의견 · 이슈","롤플레이 질문","롤플레이 문제 해결","마무리"];
+V.cram=function(){var quiz=!!S._cq;
+  function line(en,ko){var e=h("div",{class:"qtext",style:"font-size:16.5px",hidden:quiz},en);var row=h("div",{style:"padding:6px 0;border-top:1px solid var(--line)",onclick:function(){if(e.hidden){e.hidden=false}speak(en.replace(/_{2,}/g,"something").replace(/\s\/\s/g,". "))}},ko?h("div",{class:"muted"},ko):null,e);return row}
+  M.append(h("div",{class:"card"},h("h2",null,"오픽 당일 보기"),h("p",{class:"muted"},"시험장 가기 전에 위에서부터 훑으세요. 문장을 누르면 소리로 읽어 줍니다. '외우기 모드' 를 켜면 영어가 가려지고, 한국어를 보고 먼저 말한 뒤 눌러 확인합니다."),
+    h("div",{class:"row"},h("button",{class:"btn "+(quiz?"primary":""),onclick:function(){S._cq=!quiz;go("cram")}},quiz?"외우기 모드 끄기":"외우기 모드 켜기"),h("a",{class:"btn ghost",href:"#types"},"유형별 틀로"),h("a",{class:"btn ghost",href:"#lines"},"만능 문장으로"))));
+  // 1. checklist
+  M.append(h("div",{class:"card"},h("h2",null,"1. 시험장 체크리스트"),DAYLIST.map(function(t,i){return h("div",{style:"padding:5px 0;border-top:1px solid var(--line)"},(i+1)+". "+t)})));
+  // 2. flow table
+  M.append(h("div",{class:"card"},h("h2",null,"2. 1-15번 순서와 유형"),h("table",{class:"m"},h("tr",null,h("th",null,"번호"),h("th",null,"나오는 것"),h("th",null,"알아듣는 신호 · 시제")),
+    FLOW.map(function(r){return h("tr",null,h("td",{style:"white-space:nowrap"},h("b",null,r[0])),h("td",null,r[1],r[5]?h("div",{class:"muted"},r[5]):null,r[2].length?h("div",{class:"chips",style:"margin-top:4px"},r[2].map(function(t){return h("a",{class:"pill navy",href:"#t"+t,style:"text-decoration:none"},T15N[t])})):null),h("td",{class:"muted"},r[3],r[4]?h("div",null,"시제: "+r[4]):null))}))));
+  // 3. one frame per type
+  M.append(h("div",{class:"card",id:"types"},h("h2",null,"3. 유형별 외울 틀 (빈칸에 내 단어만 바꿔 넣기)"),h("p",{class:"muted"},"번호는 학원 15유형 번호입니다. 각 줄이 말하는 순서이고, ___ 자리에 오늘 쓸 단어를 넣습니다.")));
+  var order=[0,1,5,3,4,6,7,2,8,9,11,12,13,14,15,10];
+  order.forEach(function(t){var f=frameFor(t);if(!f)return;var ex=D.m.filter(function(m){return m.t15===t&&m.lv==="IM3"})[0]||D.m.filter(function(m){return m.t15===t})[0];
+    var exBox=ex?h("div",{hidden:true},h("div",{class:"muted",style:"margin-top:6px"},"키워드: "+ex.keys.join(" · ")),h("div",{class:"ans",onclick:function(){speak(ex.a)}},ex.a)):null;
+    var acad=academyDocs(t).filter(function(d){return /템플릿/.test(d.sec)});var acBox=acad.length?h("div",{hidden:true},acad.map(function(d){return mdBlock(d.md)})):null;
+    M.append(h("div",{class:"card",id:"t"+t},h("div",{class:"row",style:"justify-content:space-between"},h("h2",{style:"margin:0"},t+". "+f.name_ko),h("span",{class:"pill acc"},T15TYPE[t])),
+      h("div",{class:"muted",style:"margin:4px 0 6px"},"이럴 때: "+f.when),
+      f.steps.map(function(s){return line(s.en,s.ko)}),
+      f.tips&&f.tips.length?h("div",{class:"muted",style:"margin-top:6px"},"요령: "+f.tips[0]):null,
+      h("div",{class:"row",style:"margin-top:6px"},exBox?h("button",{class:"btn ghost",onclick:function(){exBox.hidden=!exBox.hidden}},"예시 답 보기"):null,acBox?h("button",{class:"btn ghost",onclick:function(){acBox.hidden=!acBox.hidden}},"학원 템플릿"):null,
+        h("button",{class:"btn ghost",onclick:function(){var pool=allQ().filter(function(x){return x.t15===t});if(pool.length)practice(pick(pool))}},"이 유형 한 번 말해 보기")),exBox,acBox))});
+  // 4. all-purpose lines
+  var lines=h("div",{class:"card",id:"lines"},h("h2",null,"4. 어디서나 쓰는 만능 문장"));
+  CRAM_CATS.forEach(function(c){var list=D.e.filter(function(x){return x.cat===c}).slice(0,5);if(!list.length)return;lines.append(h("h3",null,c));list.forEach(function(x){lines.append(line(x.en,x.ko))})});
+  M.append(lines);
+  if(!ACAD)M.append(h("div",{class:"card muted"},"학원 템플릿도 같이 보려면 '학원 자료' 탭에서 암호를 한 번 넣으세요."));
+  foot([h("button",{class:"btn primary",onclick:function(){go("exam")}},"모의고사 한 번"),h("button",{class:"btn",onclick:function(){window.scrollTo(0,0)}},"맨 위로")])};
 V.home=function(){var nq=D.q.length,ac=ACAD?ACAD.questions.length:0;
   M.append(h("div",{class:"tiles"},
     h("button",{class:"tile go",onclick:function(){go("exam")}},h("b",null,"실전 모의고사"),h("span",null,"15문항 · 40분 · 질문 음성 · 녹음 · 점검")),
@@ -424,7 +465,7 @@ V.set=function(){var sel=h("select");sel.append(h("option",{value:""},"자동(�
       (function(){var f=h("input",{type:"file",accept:".json",hidden:true});f.onchange=function(){var r=new FileReader();r.onload=function(){try{var o=JSON.parse(String(r.result));if(o.app!=="opic")throw 0;S=Object.assign(load(),o.data);save();toast("가져왔습니다");go("set")}catch(e){toast("이 사이트의 파일이 아닙니다")}};if(f.files[0])r.readAsText(f.files[0])};return h("span",null,f,h("button",{class:"btn",onclick:function(){f.click()}},"가져오기"))})(),
       h("button",{class:"btn ghost",onclick:function(){if(!confirm("녹음을 모두 지울까요?"))return;recAll().then(function(l){return Promise.all(l.map(function(x){return recDel(x.id)}))}).then(function(){toast("지웠습니다");go("set")})}},"녹음 모두 지우기"))))};
 // ---------- start ----------
-hstat();autoUnlock().then(function(){go("home")});
+hstat();autoUnlock().then(function(){go("cram")});
 if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
 })();
 </script>
