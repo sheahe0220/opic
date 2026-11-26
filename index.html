@@ -301,6 +301,13 @@ var FLOW=[
  ["14","비교 · 변화 (난이도 5-6)",[14],"compared to the past / How has it changed?","과거 ↔ 현재","1분-1분 30초"],
  ["15","이슈 · 의견 (난이도 5-6) · 3-4 는 에바에게 질문",[15,10],"issue · concern · problem / Ask Ava three or four questions","현재 · 의견","1분"]];
 var DAYLIST=["난이도 5 를 고르고, 7번 뒤 재조정은 '비슷한 질문'.","서베이는 공부한 그대로 고른다(혼자 사는 집 · 영화 · 공연 · 공원 · 해변 · 카페 · 음악 · 조깅 · 걷기 · 집휴가 · 국내 · 해외여행).","질문은 매번 두 번 듣는다. 다시 듣기는 질문이 끝나고 약 5초 안에만 된다.","첫 번째에 '누구에게 · 전화인지 · 시제 신호', 두 번째에 '묻는 것이 몇 개인지' 를 잡는다.","문항마다 1분에서 2분. 7번을 마칠 때 18분 안쪽이면 시간이 넉넉하다.","한 문항도 넘기지 않는다. 모르면 Honestly, I've never thought about it, but... 으로 받고 내 경험 하나로 돌린다.","과거 질문은 끝까지 과거형. 틀리면 I mean, 으로 바로 고친다.","3초 넘게 조용히 있지 않는다. 막히면 Well, / Let me see. / Actually, 를 돌려 쓴다.","외운 문장을 그대로 읽는 티를 내지 않는다. 틀 문장에 오늘 생각나는 내 이야기를 끼운다."];
+// a frame with its ___ blanks filled by one example (X_fill.json); filled words are highlighted
+function fillLine(en,st,g){var p=en.split(" / ").map(function(s){return s.trim()});var s=p[st.alt]||p[0];
+  [["him/her","him","her"],["He/She","He","She"],["he/she","he","she"],["his/her","his","her"]].forEach(function(z){s=s.split(z[0]).join(g==="f"?z[2]:z[1])});
+  var bits=s.split("___"),node=h("span",null),plain="";bits.forEach(function(b,i){node.append(b);plain+=b;if(i<bits.length-1){var w=st.f[i]||"___";node.append(h("mark",{style:"background:var(--accent-soft);color:inherit;border-radius:4px;padding:0 3px;font-weight:700"},w));plain+=w}});return{node:node,plain:plain}}
+function fillCard(f,x){var lines=f.steps.map(function(s,i){return fillLine(s.en,x.steps[i]||{alt:0,f:[]},x.g)});var all=lines.map(function(l){return l.plain}).join(" ");
+  return h("div",{class:"ans",style:"margin-top:8px"},h("div",{class:"row",style:"justify-content:space-between;margin-bottom:4px"},h("span",{class:"pill acc"},x.topic_ko),h("button",{class:"btn ghost",style:"min-height:36px;padding:4px 10px",onclick:function(){speak(all)}},"▶ 전체 듣기")),
+    lines.map(function(l){return h("div",{style:"margin:3px 0"},l.node)}))}
 var CRAM_CATS=["시작 · 시간 벌기","되묻기 · 정정","연결어","시간 · 순서","과거 경험","감정 · 소감","묘사","비교 · 변화","의견 · 이슈","롤플레이 질문","롤플레이 문제 해결","마무리"];
 V.cram=function(){var quiz=!!S._cq;
   function line(en,ko){var e=h("div",{class:"qtext",style:"font-size:16.5px",hidden:quiz},en);var row=h("div",{style:"padding:6px 0;border-top:1px solid var(--line)",onclick:function(){if(e.hidden){e.hidden=false}speak(en.replace(/_{2,}/g,"something").replace(/\s\/\s/g,". "))}},ko?h("div",{class:"muted"},ko):null,e);return row}
@@ -314,8 +321,8 @@ V.cram=function(){var quiz=!!S._cq;
   // 3. one frame per type
   M.append(h("div",{class:"card",id:"types"},h("h2",null,"3. 유형별 외울 틀 (빈칸에 내 단어만 바꿔 넣기)"),h("p",{class:"muted"},"번호는 학원 15유형 번호입니다. 각 줄이 말하는 순서이고, ___ 자리에 오늘 쓸 단어를 넣습니다.")));
   var order=[0,1,5,3,4,6,7,2,8,9,11,12,13,14,15,10];
-  order.forEach(function(t){var f=frameFor(t);if(!f)return;var ex=D.m.filter(function(m){return m.t15===t&&m.lv==="IM3"})[0]||D.m.filter(function(m){return m.t15===t})[0];
-    var exBox=ex?h("div",{hidden:true},h("div",{class:"muted",style:"margin-top:6px"},"키워드: "+ex.keys.join(" · ")),h("div",{class:"ans",onclick:function(){speak(ex.a)}},ex.a)):null;
+  order.forEach(function(t){var f=frameFor(t);if(!f)return;var exs=(D.x||[]).filter(function(x){return x.t15===t});
+    var exBox=exs.length?h("div",{hidden:true},h("div",{class:"muted",style:"margin-top:6px"},"위 틀 문장 그대로이고, 색칠한 곳만 내 단어로 바꾼 것입니다."),exs.map(function(x){return fillCard(f,x)})):null;
     var acad=academyDocs(t).filter(function(d){return /템플릿/.test(d.sec)});var acBox=acad.length?h("div",{hidden:true},acad.map(function(d){return mdBlock(d.md)})):null;
     M.append(h("div",{class:"card",id:"t"+t},h("div",{class:"row",style:"justify-content:space-between"},h("h2",{style:"margin:0"},t+". "+f.name_ko),h("span",{class:"pill acc"},T15TYPE[t])),
       h("div",{class:"muted",style:"margin:4px 0 6px"},"이럴 때: "+f.when),
