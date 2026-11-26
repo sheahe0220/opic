@@ -96,7 +96,7 @@ svg.chart{width:100%;height:140px}
   <main id="main"></main>
 </div>
 <div class="foot" id="foot" hidden><div class="in" id="footIn"></div></div>
-<script src="data/opic_data.js?v=7729749d3f"></script>
+<script src="data/opic_data.js?v=8c2742f6e5"></script>
 <script>
 "use strict";
 (function(){
@@ -359,7 +359,8 @@ V.cram=function(){var quiz=!!S._cq;
   // 3. one frame per type
   M.append(h("div",{class:"card",id:"types"},h("h2",null,"3. 유형별 외울 틀 (빈칸에 내 단어만 바꿔 넣기)"),h("p",{class:"muted"},"번호는 학원 15유형 번호입니다. 각 줄이 말하는 순서이고, ___ 자리에 오늘 쓸 단어를 넣습니다.")));
   var order=[0,1,5,3,4,6,7,2,8,9,11,12,13,14,15,10];
-  order.forEach(function(t){var f=frameFor(t);if(!f)return;var exs=(D.x||[]).filter(function(x){return x.t15===t});
+  order.forEach(function(t){var f=frameFor(t);if(!f)return;
+    if(t===6&&S._hard!==true){M.append(h("div",{class:"card",id:"t6"},h("h2",null,"6. 시간순서(넘어감)"),h("p",{class:"muted"},"따로 외우지 않습니다. 루틴 질문이 나오면 1번 활동묘사 답에 순서 말만 붙이세요: First, Then, After that, Finally."),line("First, I put on my earphones. Then, I walk around Ilwol Reservoir. After that, I sit on a bench and watch YouTube. Finally, I go back home.","이렇게 말하면 됩니다")));return}var exs=(D.x||[]).filter(function(x){return x.t15===t});
     var easy=S._hard!==true;var exBox=exs.length?h("div",{hidden:!easy},h("div",{class:"muted",style:"margin-top:6px"},"위 틀 문장 그대로이고, 색칠한 곳만 내 단어로 바꾼 것입니다."),(easy?(exs.filter(function(x){return x.mine}).length?exs.filter(function(x){return x.mine}):exs.slice(0,1)):exs).map(function(x){return fillCard(f,x)})):null;
     // academy material (user has the academy's permission, 2026-11-26): keywords + strategy, textbook template,
     // completed answers and textbook questions, all inside the card, then the easy frame and fill-in examples
