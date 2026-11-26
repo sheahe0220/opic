@@ -96,7 +96,7 @@ svg.chart{width:100%;height:140px}
   <main id="main"></main>
 </div>
 <div class="foot" id="foot" hidden><div class="in" id="footIn"></div></div>
-<script src="data/opic_data.js?v=94b8822937"></script>
+<script src="data/opic_data.js?v=71eb9ce11f"></script>
 <script>
 "use strict";
 (function(){
@@ -273,7 +273,7 @@ function docCard(d){var body=h("div",{hidden:true},mdBlock(d.md));var b=h("butto
 function recPanel(q,o){o=o||{};var box=h("div",{class:"card"});var meter=h("div",{class:"meter"},h("i"));var clock=h("div",{class:"big"},"0:00");var live=h("div",{class:"live",hidden:!o.showLive},"");
   var st=h("div",{class:"muted"},o.limit?"제한 "+mmss(o.limit):"녹음 버튼을 누르고 답하세요.");var btn=h("button",{class:"btn rec wide"},"● 녹음 시작");var ctl=null,timer=null;
   box.append(h("div",{class:"row",style:"justify-content:space-between"},clock,st),meter,h("div",{style:"height:8px"}),live,h("div",{style:"height:8px"}),btn);
-  function start(){startRec({onLevel:function(r,t){meter.firstChild.style.width=Math.min(100,r*600)+"%";clock.textContent=mmss(t);if(o.limit&&t>=o.limit)stop()},onText:function(t){live.textContent=t}}).then(function(c){ctl=c;btn.textContent="■ 녹음 끝내기";btn.className="btn primary wide";st.textContent=o.limit?"제한 "+mmss(o.limit)+" · 말하는 중":"말하는 중"}).catch(function(e){toast("마이크를 쓸 수 없습니다: "+(e.message||e.name));st.textContent="마이크 권한을 허용해야 녹음됩니다."})}
+  function start(){startRec({onLevel:function(r,t){meter.firstChild.style.width=Math.min(100,r*600)+"%";clock.textContent=mmss(t);if(o.limit&&t>=o.limit)stop()},onText:function(t){live.textContent=t}}).then(function(c){ctl=c;ACTIVE_REC=box;btn.textContent="■ 녹음 끝내기";btn.className="btn primary wide";st.textContent=o.limit?"제한 "+mmss(o.limit)+" · 말하는 중":"말하는 중"}).catch(function(e){toast("마이크를 쓸 수 없습니다: "+(e.message||e.name));st.textContent="마이크 권한을 허용해야 녹음됩니다."})}
   function stop(){if(!ctl)return;var c=ctl;ctl=null;btn.disabled=true;st.textContent="저장하는 중";c.stop().then(function(r){btn.disabled=false;btn.textContent="● 다시 녹음";btn.className="btn rec wide";meter.firstChild.style.width="0";st.textContent="녹음 "+mmss(r.dur);o.onDone&&o.onDone(r)})}
   btn.onclick=function(){if(ctl)stop();else start()};box.startNow=start;box.stopNow=stop;box.isOn=function(){return !!ctl};box.cancel=function(){if(ctl){ctl.cancel();ctl=null}};return box}
 function saveRec(r,q,mode,a){var id=Date.now()+"_"+Math.random().toString(36).slice(2,7);var x={id:id,at:new Date().toISOString(),mode:mode,qid:q?q.id:"",q:q?q.q:"",t15:q?q.t15:null,src:q?q.src:"",blob:r.blob,mime:r.blob.type,dur:r.dur,text:r.text,levels:r.levels.filter(function(_,i){return i%4===0}),a:a};
@@ -286,7 +286,14 @@ function resultBlock(r,q,a,rec){var url=URL.createObjectURL(r.blob);var tx=h("di
 var VIEWS=[["cram","당일 보기"],["home","오늘"],["exam","실전 모의고사"],["type","유형 연습"],["rep","3번 말하기"],["shadow","섀도잉"],["listen","질문 알아듣기"],["expr","표현"],["acad","학원 자료"],["mine","내 스크립트"],["box","녹음함"],["set","설정"]];
 var view="home",cleanup=null;
 var tabs=document.getElementById("tabs");VIEWS.forEach(function(v){tabs.append(h("button",{"data-v":v[0],onclick:function(){go(v[0])}},v[1]))});
-function go(v){if(cleanup){try{cleanup()}catch(e){}cleanup=null}stopSpeak();view=v;Array.prototype.forEach.call(tabs.children,function(b){b.setAttribute("aria-selected",b.dataset.v===v?"true":"false")});clear(M);foot(null);(V[v]||V.home)();window.scrollTo(0,0)}
+// browser back button: every screen change is a history entry, and going back restores the screen and its scroll
+// position (user 2026-11-26: back from "이 유형 한 번 말해 보기" left the site)
+var ACTIVE_REC=null;function stopActiveRec(){try{if(ACTIVE_REC&&ACTIVE_REC.isOn())ACTIVE_REC.cancel()}catch(e){}ACTIVE_REC=null}
+function remember(){try{history.replaceState(Object.assign({},history.state||{},{v:view,y:window.scrollY}),"")}catch(e){}}
+function go(v,opt){opt=opt||{};if(!opt.pop&&view!==v){remember();try{history.pushState({v:v,y:0},"","#"+v)}catch(e){}}
+  stopActiveRec();if(cleanup){try{cleanup()}catch(e){}cleanup=null}stopSpeak();view=v;Array.prototype.forEach.call(tabs.children,function(b){b.setAttribute("aria-selected",b.dataset.v===v?"true":"false")});clear(M);foot(null);(V[v]||V.home)();
+  var y=opt.y||0;window.scrollTo(0,y);if(y)setTimeout(function(){window.scrollTo(0,y)},60)}
+window.addEventListener("popstate",function(e){var st=e.state||{v:"cram",y:0};go(st.v||"cram",{pop:true,y:st.y||0})});
 var V={};
 // ---------- day-of cram sheet: order of 15 questions, one frame per type, all-purpose lines ----------
 var FLOW=[
@@ -456,7 +463,7 @@ V.type=function(){var sel=S._t15==null?1:S._t15;var seg=h("div",{class:"chips"})
   M.append(h("div",{class:"card"},h("h2",null,"유형 연습"),h("p",{class:"muted"},"유형을 고르면 질문 하나가 나옵니다. 답한 뒤 점검 · 답변 틀 · 학원 템플릿 · 모범 답변을 함께 봅니다."),seg,h("p",{class:"muted"},"이 유형 질문 "+pool.length+"개"+(ACAD?"":" (학원 질문은 잠금 해제 후 추가)"))));
   if(!pool.length){M.append(h("div",{class:"card"},"이 유형의 질문이 없습니다."));return}
   var unseen=pool.filter(function(x){return !S.seen[x.id]});practice(pick(unseen.length?unseen:pool),true)};
-function practice(q,keep){if(!keep){clear(M);foot(null)}S.seen[q.id]=today();save();var after=h("div");
+function practice(q,keep){if(!keep){remember();try{history.pushState({v:view,y:0,p:1},"","#"+view+"-practice")}catch(e){}stopActiveRec();if(cleanup){try{cleanup()}catch(e){}cleanup=null}stopSpeak();clear(M);foot(null);window.scrollTo(0,0)}S.seen[q.id]=today();save();var after=h("div");
   var panel=recPanel(q,{showLive:true,onDone:function(r){var a=analyze(r,q);saveRec(r,q,"type",a).then(function(rec){clear(after);after.append(resultBlock(r,q,a,rec),helpBlocks(q))})}});
   M.append(qCard(q),panel,after);
   foot([h("button",{class:"btn",onclick:function(){go(view==="type"?"type":view)}},"다른 질문"),h("button",{class:"btn ghost",onclick:function(){clear(after);after.append(helpBlocks(q))}},"틀 · 모범 답변 보기")])}
@@ -541,7 +548,7 @@ V.set=function(){var sel=h("select");sel.append(h("option",{value:""},"자동(�
       (function(){var f=h("input",{type:"file",accept:".json",hidden:true});f.onchange=function(){var r=new FileReader();r.onload=function(){try{var o=JSON.parse(String(r.result));if(o.app!=="opic")throw 0;S=Object.assign(load(),o.data);save();toast("가져왔습니다");go("set")}catch(e){toast("이 사이트의 파일이 아닙니다")}};if(f.files[0])r.readAsText(f.files[0])};return h("span",null,f,h("button",{class:"btn",onclick:function(){f.click()}},"가져오기"))})(),
       h("button",{class:"btn ghost",onclick:function(){if(!confirm("녹음을 모두 지울까요?"))return;recAll().then(function(l){return Promise.all(l.map(function(x){return recDel(x.id)}))}).then(function(){toast("지웠습니다");go("set")})}},"녹음 모두 지우기"))))};
 // ---------- start ----------
-hstat();autoUnlock().then(function(){go("cram")});
+hstat();autoUnlock().then(function(){var v0=(location.hash||"").replace(/^#/,"").split("-")[0];v0=V[v0]?v0:"cram";try{history.replaceState({v:v0,y:0},"","#"+v0)}catch(e){}go(v0,{pop:true})});
 if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
 })();
 </script>
