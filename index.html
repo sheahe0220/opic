@@ -96,7 +96,7 @@ svg.chart{width:100%;height:140px}
   <main id="main"></main>
 </div>
 <div class="foot" id="foot" hidden><div class="in" id="footIn"></div></div>
-<script src="data/opic_data.js?v=45e8b44b7d"></script>
+<script src="data/opic_data.js?v=cbee2bbfd7"></script>
 <script>
 "use strict";
 (function(){
@@ -397,8 +397,18 @@ V.cram=function(){var quiz=!!S._cq;
       answers.length?h("div",null,h("span",{class:"pill acc"},"학원 완성 답변"),answers.map(function(b){return h("div",null,h("pre",{class:"doc"},b.trim()),sp(b))})):null,
       aq.length?h("div",null,h("span",{class:"pill acc"},"교재 기출 질문"),aq.map(function(q){return h("div",{style:"padding:4px 0"},h("div",{class:"qtext",style:"font-size:15.5px"},q.q),h("div",{class:"row"},sp(q.q),h("button",{class:"btn ghost",style:"min-height:34px;padding:2px 10px",onclick:function(){practice(q)}},"이 질문 연습")))})):null):null;
     var acBox=aT?h("div",{hidden:true},mdBlock(aT.md)):null;
+    // hear a real question of this type first, like Ava in the test (user 2026-11-26 '질문을 듣게 할 수 없나'):
+    // textbook questions first when the academy pack is open, else our bank; text stays hidden until asked
+    var qBox=(function(){var pool=aq.length?academyQ().filter(function(x){return x.t15===t}):allQ().filter(function(x){return x.t15===t});if(!pool.length)return null;
+      var cur=null,txt=h("div",{class:"qtext",style:"font-size:15.5px",hidden:true}),tp=h("span",{class:"pill"}),showB;
+      function next(){var c=pool.filter(function(x){return x!==cur});cur=pick(c.length?c:pool);txt.textContent=cur.q;tp.textContent=cur.topic_ko||"";speak(cur.q,null,S.set.rate)}
+      var b=function(l,fn){return h("button",{class:"btn ghost",style:"min-height:34px;padding:2px 10px",onclick:fn},l)};
+      showB=b("글 보기",function(ev){if(!cur)next();txt.hidden=!txt.hidden;ev.currentTarget.textContent=txt.hidden?"글 보기":"글 숨기기"});
+      return h("div",{style:"margin:2px 0 8px;padding:8px 10px;border-radius:10px;background:var(--soft,rgba(127,127,127,.08))"},
+        h("div",{class:"row"},h("b",{style:"font-size:14px"},"실제 질문 듣기"),tp),
+        h("div",{class:"row"},b("▶ 질문 듣기",function(){if(!cur)next();else speak(cur.q,null,S.set.rate)}),b("다른 질문",next),showB,b("이 질문으로 말해 보기",function(){if(!cur)next();stopSpeak();practice(cur)})),txt)})();
     M.append(h("div",{class:"card",id:"t"+t},h("div",{class:"row",style:"justify-content:space-between"},h("h2",{style:"margin:0"},t+". "+f.name_ko),h("span",{class:"pill acc"},T15TYPE[t])),
-      h("div",{class:"muted",style:"margin:4px 0 6px"},"이럴 때: "+f.when),easy?null:acadBox,
+      h("div",{class:"muted",style:"margin:4px 0 6px"},"이럴 때: "+f.when),qBox,easy?null:acadBox,
       h("span",{class:"pill navy"},easy?"외울 틀 (빈칸에 내 단어만)":acadBox?"쉬운 틀 (위와 같은 순서, 짧은 문장)":"외울 틀"),
       f.steps.map(function(s){return line(s.en,s.ko)}),
       f.tips&&f.tips.length?h("div",{class:"muted",style:"margin-top:6px"},"요령: "+f.tips[0]):null,
