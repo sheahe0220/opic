@@ -96,7 +96,7 @@ svg.chart{width:100%;height:140px}
   <main id="main"></main>
 </div>
 <div class="foot" id="foot" hidden><div class="in" id="footIn"></div></div>
-<script src="data/opic_data.js?v=a378e57afa"></script>
+<script src="data/opic_data.js?v=f53fec0620"></script>
 <script>
 "use strict";
 (function(){
@@ -324,11 +324,14 @@ V.cram=function(){var quiz=!!S._cq;
   order.forEach(function(t){var f=frameFor(t);if(!f)return;var exs=(D.x||[]).filter(function(x){return x.t15===t});
     var exBox=exs.length?h("div",{hidden:true},h("div",{class:"muted",style:"margin-top:6px"},"위 틀 문장 그대로이고, 색칠한 곳만 내 단어로 바꾼 것입니다."),exs.map(function(x){return fillCard(f,x)})):null;
     var acad=academyDocs(t).filter(function(d){return /템플릿/.test(d.sec)});var acBox=acad.length?h("div",{hidden:true},acad.map(function(d){return mdBlock(d.md)})):null;
+    // academy textbook template (user has the academy's permission, 2026-11-26): shown open at the top of the card
+    var tpl=acad.map(function(d){var i=d.md.indexOf("교재 템플릿");if(i<0)return null;var m=d.md.slice(i).match(/```(?:text)?\n([\s\S]*?)```/);return m?m[1].trim():null}).filter(Boolean)[0];
+    var tplBox=tpl?h("div",{style:"margin:6px 0 10px"},h("div",{class:"row"},h("span",{class:"pill acc"},"학원 템플릿"),h("button",{class:"btn ghost",style:"min-height:34px;padding:2px 10px",onclick:function(){speak(tpl.replace(/\[[^\]]*\]/g,"something").replace(/\([^)]*\)/g," "))}},"▶ 듣기")),h("pre",{class:"doc"},tpl),h("div",{class:"muted"},"아래는 같은 순서를 더 쉬운 문장으로 줄인 틀입니다.")):null;
     M.append(h("div",{class:"card",id:"t"+t},h("div",{class:"row",style:"justify-content:space-between"},h("h2",{style:"margin:0"},t+". "+f.name_ko),h("span",{class:"pill acc"},T15TYPE[t])),
-      h("div",{class:"muted",style:"margin:4px 0 6px"},"이럴 때: "+f.when),
+      h("div",{class:"muted",style:"margin:4px 0 6px"},"이럴 때: "+f.when),tplBox,
       f.steps.map(function(s){return line(s.en,s.ko)}),
       f.tips&&f.tips.length?h("div",{class:"muted",style:"margin-top:6px"},"요령: "+f.tips[0]):null,
-      h("div",{class:"row",style:"margin-top:6px"},exBox?h("button",{class:"btn ghost",onclick:function(){exBox.hidden=!exBox.hidden}},"예시 답 보기"):null,acBox?h("button",{class:"btn ghost",onclick:function(){acBox.hidden=!acBox.hidden}},"학원 템플릿"):null,
+      h("div",{class:"row",style:"margin-top:6px"},exBox?h("button",{class:"btn ghost",onclick:function(){exBox.hidden=!exBox.hidden}},"예시 답 보기"):null,acBox?h("button",{class:"btn ghost",onclick:function(){acBox.hidden=!acBox.hidden}},"학원 완성 답변 · 전체"):null,
         h("button",{class:"btn ghost",onclick:function(){var pool=allQ().filter(function(x){return x.t15===t});if(pool.length)practice(pick(pool))}},"이 유형 한 번 말해 보기")),exBox,acBox))});
   // 4. all-purpose lines
   var lines=h("div",{class:"card",id:"lines"},h("h2",null,"4. 어디서나 쓰는 만능 문장"));
