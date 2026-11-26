@@ -1,5 +1,5 @@
 // offline cache for the app shell; academy pack and model files are fetched fresh when online
-const V='opic-0f64c21904';
+const V='opic-b5d4572079';
 const CORE=['./','index.html','data/opic_data.js','manifest.webmanifest','icon.svg'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
