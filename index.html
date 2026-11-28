@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>오픽 말하기 훈련소</title>
+<title>오픽</title>
 <style>
 /* OPIc speaking trainer (2026-11-19). Mobile first; one task per screen; big tap targets.
    Colours: Radix slate + indigo (listen) + orange (speak), same family as the TOEIC site. */
@@ -29,6 +29,16 @@ header{position:sticky;top:0;z-index:5;background:var(--bg);padding:max(10px,env
 .hstat{font-family:var(--mono);font-size:13px;color:var(--ink-2)}
 nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-top:6px}
 nav.tabs::-webkit-scrollbar{display:none}
+/* wide screens (PC): wrap the tab row so every tab is visible; phones keep the side-scrolling row (user 2026-11-27) */
+@media (min-width:700px){nav.tabs{flex-wrap:wrap;overflow-x:visible;row-gap:0}}
+/* site switch pill [오픽 | 토익], same spec as the TOEIC site (영어2 build_site_v17 SWITCH_CSS, user 2026-11-29) */
+.xswitch{display:inline-flex;flex:none;height:36px;border:1px solid #d9d9e0;border-radius:999px;overflow:hidden;vertical-align:middle}
+.xswitch a{display:flex;align-items:center;justify-content:center;min-width:56px;padding:0 14px;font-size:16px;font-weight:700;line-height:1;text-decoration:none;white-space:nowrap;background:transparent;color:#60646c}
+.xswitch a+a{border-left:1px solid #d9d9e0}
+.xswitch a[aria-current]{background:#3e63dd;color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .xswitch{border-color:#363a3f}:root:not([data-theme="light"]) .xswitch a{color:#b0b4ba}:root:not([data-theme="light"]) .xswitch a+a{border-left-color:#363a3f}:root:not([data-theme="light"]) .xswitch a[aria-current]{background:#9eb1ff;color:#11131f}}
+:root[data-theme="dark"] .xswitch{border-color:#363a3f}:root[data-theme="dark"] .xswitch a{color:#b0b4ba}:root[data-theme="dark"] .xswitch a+a{border-left-color:#363a3f}:root[data-theme="dark"] .xswitch a[aria-current]{background:#9eb1ff;color:#11131f}
+.hlink{font-size:14px;color:var(--ink-2);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:2px 10px;white-space:nowrap}
 nav.tabs button{border:0;background:transparent;padding:8px 11px 10px;cursor:pointer;color:var(--ink-2);font-size:14.5px;border-bottom:2px solid transparent;white-space:nowrap}
 nav.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent);font-weight:700}
 main{margin-top:14px;display:flex;flex-direction:column;gap:12px}
@@ -90,13 +100,13 @@ svg.chart{width:100%;height:140px}
 <body>
 <div class="wrap">
   <header>
-    <div class="hrow"><h1>오픽 말하기 훈련소</h1><span class="hstat" id="hstat"></span></div>
+    <div class="hrow"><h1>오픽</h1><span class="hstat" id="hstat"></span><a class="hlink" href="https://sheahe0220.github.io/calendar.html">일정</a><span class="xswitch" role="navigation" aria-label="오픽 · 토익 바꾸기"><a href="./" aria-current="page">오픽</a><a href="https://sheahe0220.github.io/toeic800/">토익</a></span></div>
     <nav class="tabs" id="tabs"></nav>
   </header>
   <main id="main"></main>
 </div>
 <div class="foot" id="foot" hidden><div class="in" id="footIn"></div></div>
-<script src="data/opic_data.js?v=ad3fe5e422"></script>
+<script src="data/opic_data.js?v=a4a074b581"></script>
 <script>
 "use strict";
 (function(){
@@ -246,7 +256,10 @@ function b64(s){var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;
 // "academy" is opened at unlock. "al" and "ql" may be split out (coordinator plan 2026-11-27, pack script v5) and are
 // then fetched only when first needed; while they are still inside "academy" nothing extra is fetched.
 var PW=null,PACK_WAIT={};
-function unlockPack(name,pw){return fetch("data/"+name+".enc.json",{cache:"no-cache"}).then(function(r){if(!r.ok){var e=new Error(name==="academy"?"학원 자료 파일이 아직 없습니다":"없음");e.missing=true;throw e}return r.json()}).then(async function(enc){
+// site version from the data script tag (build v8 hashes the packs into it): packs are fetched with ?v=<ver> so a
+// cache never pairs this page with an older pack
+function siteVer(){var s=document.querySelector('script[src*="opic_data.js"]');var m=s&&/[?&]v=([0-9a-f]+)/.exec(s.getAttribute("src"));return m?m[1]:""}
+function unlockPack(name,pw){var v=siteVer();return fetch("data/"+name+".enc.json"+(v?"?v="+v:""),{cache:"no-cache"}).then(function(r){if(!r.ok){var e=new Error(name==="academy"?"학원 자료 파일이 아직 없습니다":"없음");e.missing=true;throw e}return r.json()}).then(async function(enc){
   var km=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
   var key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(enc.salt),iterations:enc.iter,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["decrypt"]);
   var pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(enc.iv)},key,b64(enc.ct)).catch(function(){throw new Error("암호가 맞지 않습니다")});
